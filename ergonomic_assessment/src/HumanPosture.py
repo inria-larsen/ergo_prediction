@@ -35,9 +35,6 @@ class HumanPosture():
 				self.list_all_joints.append(joint + '_' + dim)
 				self.reduced_dof += 1
 
-		print(self.reduced_joints)
-		print(self.list_all_joints)
-
 	def update_posture(self, input_joints):
 		self.joints_whole_body = input_joints
 		self.joint_reduce_body = np.zeros(self.reduced_dof)
@@ -52,7 +49,7 @@ class HumanPosture():
 			for i_joint in self.mapping_joints[name_joint]['input_joints']:
 			 	id_joint = self.get_id_input_joint(i_joint)
 			 	dim = self.dimensions[dim_joint]
-			 	self.joint_reduce_body[num_joint] += self.joints_whole_body[id_joint*3+dim]
+			 	self.joint_reduce_body[num_joint] += np.deg2rad(self.joints_whole_body[id_joint*3+dim])
 
 
 	def get_id_input_joint(self, name_joint):
