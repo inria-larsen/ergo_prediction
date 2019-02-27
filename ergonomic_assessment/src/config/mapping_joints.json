@@ -1,0 +1,119 @@
+{
+	"INPUT_JOINTS":{
+		"nbr_dof": 66,
+		"dimensions": {
+			"pitch": 2,
+			"roll": 0,
+			"yaw": 1
+		},
+		"xsens_joints": ["jL5S1", 
+			"jL4S3", 
+			"jL1T2", 
+			"jT9T8",
+			"jT1C7",
+			"jC1Head",
+			"jRightT4Shoulder",
+			"jRightShoulder",
+			"jRightElbow",
+			"jRightWrist",
+			"jLeftT4Shoulder",
+			"jLeftShoulder",
+			"jLeftElbow",
+			"jLeftWrist",
+			"JRightHip",
+			"jRightKnee",
+			"jRightAnkle",
+			"jRightBallFoot",
+			"JLeftHip",
+			"jLeftKnee",
+			"jLeftAnkle",
+			"jLeftBallFoot"]
+	},
+
+	"REDUCED_JOINTS":{
+		"jTorso": {
+			"input_joints": ["jL5S1", "jL4S3", "jL1T2", "jT9T8"],
+			"mapping":{
+				"pitch": 1,
+				"roll": 1,
+				"yaw": 1
+			}
+		},
+
+		"jNeck": {
+			"input_joints": ["jC1Head"],
+			"mapping":{
+				"pitch": 1,
+				"roll": 1,
+				"yaw": 1
+			}
+		},
+
+		"jRShoulder": {
+			"input_joints": ["jRightShoulder"],
+			"mapping":{
+				"pitch": 1,
+				"roll": 1,
+				"yaw": 1
+			}
+		},
+
+		"jRElbow": {
+			"input_joints": ["jRightElbow"],
+			"mapping":{
+				"pitch": 1
+			}
+		},
+
+		"jRWrist": {
+			"input_joints": ["jRightWrist"],
+			"mapping":{
+				"pitch": 1,
+				"roll": 1,
+				"yaw": 1
+			}
+		},
+
+		"jRKnee": {
+			"input_joints": ["jRightKnee"],
+			"mapping":{
+				"pitch": 1
+			}
+		},
+
+		"jLShoulder": {
+			"input_joints": ["jLeftShoulder"],
+			"mapping":{
+				"pitch": 1,
+				"roll": 1,
+				"yaw": 1
+			}
+		},
+
+		"jLElbow": {
+			"input_joints": ["jLeftElbow"],
+			"mapping":{
+				"pitch": 1
+			}
+		},
+
+		"jLWrist": {
+			"input_joints": ["jLeftWrist"],
+			"mapping":{
+				"pitch": 1,
+				"roll": 1,
+				"yaw": 1
+			}
+		},
+
+		"jLKnee": {
+			"input_joints": ["jLeftKnee"],
+			"mapping":{
+				"pitch": 1
+			}
+		}
+	}
+
+
+
+}
