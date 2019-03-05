@@ -1,6 +1,31 @@
-# TODO missing module docstring
-# TODO consider using a sensible color scheme (docstring more visible than comments)
-# TODO consider limiting lines at 79 characters (PEP8)
+""" ErgoAssessment Class
+
+Author: Adrien Malaisé
+email: adrien.malaise@inria.fr
+
+This Class is used to compute automatic ergonomics assessment based on 
+ergonomic worksheet from industry.
+
+Example:
+	$ from ErgoAssessment import ErgoAssessment
+	$ ergo_assessment = ErgoAssessment("rula_config.json")
+	$ ergo_assessment.compute_ergo_scores(posture)
+	$ RULA_score = ergo_assessment['TABLE_RULA_C']
+
+Attributes:
+	_list_ergo_score: a list of dictionnary represented the ergonomics
+		score to compute with:
+			{
+				"name": a string to represent the ergonomic score
+				"value": a float or int depending the type of ergonomic score
+				"info": a dictionnary of all the parameter needed to compute the score
+			}
+	config_file: a string of the name of the configuration file (.json) such as:
+		rula_config.json
+		reba_config.json
+
+"""
+
 import json
 import math 
 
@@ -8,23 +33,26 @@ from HumanPosture import HumanPosture
 
 class ErgoAssessment: 
 	"""
-	This class is used to compute ergonomics score according to a configuration file 
-	in parameter.
-	Score are both local and global.
-	"""  # FIXME docstring should be completed with api/usage
+	This class is used to compute ergonomics score according to a 
+	configuration file in parameter.
+	Scores are both local and global.
+	"""
 	def __init__(self, config_file):
 		"""
-		input: a configuration file in json with the description of all the ergonomics score used 
-		by the module
+		input: a configuration file in json with the description of all the 
+		ergonomics score used by the module
 		"""
 		self._config_file = config_file
 		self._list_ergo_score = []
 		self._load_config_file()
 
-	def _load_config_file(self):  # FIXME missing docstring
+	def _load_config_file(self):
 		"""
-
+		This function initialize the _list_ergo_score attributes according to
+		configuration file.
+		All ergonomic score are initialized with the value 'NONE'.
 		"""
+		# TODO: add test if score already in list
 		with open(self._config_file, 'r') as f:
 			config_ergo = json.load(f)
 
@@ -37,17 +65,14 @@ class ErgoAssessment:
 	
 			self._list_ergo_score.append({
 				"name": ergo_score,
-				"value": 0,
+				"value": "NONE",
 				"info": config_ergo['ERGO_SCORE'][ergo_score]
 				})
-
-		self.nbr_score = len(self._list_ergo_score)
 
 	def compute_ergo_scores(self, posture):
 		"""
 		Compute all the ergonomic score related to the posture in parameter
 		input: a list or array <nbr_dof, 1> with all joint angle values
-		output: a list <nbr_score, 1> of all computed ergonomics score
 		"""
 		self._initiliaze_score()
 		self.posture = posture
@@ -55,9 +80,14 @@ class ErgoAssessment:
 			self._compute_score(ergo_score)
 
 	def _compute_score(self, ergo_score):
+		"""
+		Compute a specific ergonomic score send in parameter.
+		input: ergo_score is a dictionnary of one of the ergonomic score from
+		_list_ergo_score.
+		"""
 		if(not(ergo_score['info']["related_score"] == "none")):
 			for related_score in ergo_score['info']["related_score"]:
-				if(self.__getitem__(related_score) == 0):
+				if(self.__getitem__(related_score) == "NONE"):
 					self._compute_score(self.get_ergo_score(related_score))
 
 		if ergo_score['info']["type_score"] == "jointAngle":
@@ -83,9 +113,9 @@ class ErgoAssessment:
 
 		return ergo_value
 
-	def _compute_table_score(self, table_score):# FIXME missing docstring
-		"""
-
+	def _compute_table_score(self, table_score):
+		""" 
+		Compute the ergonomic score related to a table
 		"""
 		related_score = table_score['info']['related_score']
 		ergo_value = table_score['info']['table']
@@ -95,9 +125,9 @@ class ErgoAssessment:
 
 		return ergo_value
 
-	def _compute_max_score(self, local_score):# FIXME missing docstring
+	def _compute_max_score(self, local_score):
 		"""
-		
+		Return the maximum ergonomic score in a list
 		"""
 		related_score = local_score['info']['related_score']
 		ergo_value = []
@@ -106,27 +136,33 @@ class ErgoAssessment:
 		ergo_value = max(ergo_value)
 		return ergo_value
 
-	def _initiliaze_score(self): # FIXME missing docstring
+	def _initiliaze_score(self):
 		for ergo_score in self._list_ergo_score:
-			ergo_score['value'] = 0
+			ergo_score['value'] = "NONE"
 
 
-	def get_ergo_score(self, name_score):  # FIXME missing docstring 
+	def get_ergo_score(self, name_score): 
 		"""
+		Return the dictionnary of the ergonomic score with the name given in input.
+		name_score: string
 		"""
+		# TODO add exception if name_score doesn't exist
 		for ergo_score in self._list_ergo_score:
 			if(ergo_score['name'] == name_score):
 				return ergo_score
 
-	def __getitem__(self, name_score): # FIXME missing docstring
+	def __getitem__(self, name_score):
 		"""
+		Return the value of an ergonomic score with the name given in input
 		"""
+		# TODO add exception if name_score doesn't exist
 		for ergo_score in self._list_ergo_score:
 			if(ergo_score['name'] == name_score):
 				return ergo_score['value']
 
 	def __setitem__(self, name_score, value):  # FIXME missing docstring
 		"""
+		Set the value of an ergonomic score with the name given in input
 		"""
 		for ergo_score in self._list_ergo_score:
 			if(ergo_score['name'] == name_score):
