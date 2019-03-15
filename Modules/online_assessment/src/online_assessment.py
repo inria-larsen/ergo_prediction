@@ -11,54 +11,79 @@ from ErgoAssessment import ErgoAssessment
 from HumanPosture import HumanPosture
 
 class ErgonomicAssessmentModule(yarp.RFModule):
-	"""
-	This module compute online the ergonomic scores of postures related
-	to worksheets from industry
+	"""This module compute online the ergonomic scores of postures 
+	related to worksheets from industry
+
+	Example:
+		>>> python online_assessment.py --from ergo_config.ini
+
+	Attributes:
+		in_port_posture (BufferedPortBottle): Input port. It is used to read
+			the posture data.
+
+		list_out_port_ergo (Dict{BufferedPortBottle}): List of output ports. 
+			They send the ergonomic value of each measure included in the 
+			configuration file.
+
 	"""
 	def __init__(self):
 		yarp.RFModule.__init__(self)
 		self.handlerPort = yarp.Port()
 
 	def configure(self, rf):
+		"""Configure the module according to the configuration file
+
+		Args: 
+			rf (string): name of the configuration file of the module. 
+				This file must be include in the folder pointing to the yarp
+				contexts. By default: rf = 'default.ini'
+		"""
+
 		self.handlerPort.open("/ErgonomicAssessmentModule")
 		self.attach(self.handlerPort)
 
-		self.port_posture = yarp.BufferedPortBottle()
-		self.port_posture.open('/ergo_pred/posture:i')
+		self.in_port_posture = yarp.BufferedPortBottle()
+		self.in_port_posture.open('/ergo_pred/posture:i')
 
 		path_config_posture = rf.find('posture_config').toString()
-		self.posture = HumanPosture(path_config_posture)
+		self._posture = HumanPosture(path_config_posture)
 		
 		path_config_ergo = rf.find('ergo_config').toString()
-		self.ergo_assessment = ErgoAssessment(path_config_ergo)
+		self._ergo_assessment = ErgoAssessment(path_config_ergo)
 
-		self.list_port_ergo = dict()
+		self.list_out_port_ergo = dict()
 
-		for ergo_score in self.ergo_assessment.get_list_score():
-			self.list_port_ergo[ergo_score] = yarp.BufferedPortBottle()
-			self.list_port_ergo[ergo_score].open("/ergo_pred/" + ergo_score.lower() +':o')
+		for ergo_score in self._ergo_assessment.get_list_score():
+			self.list_out_port_ergo[ergo_score] = yarp.BufferedPortBottle()
+			self.list_out_port_ergo[ergo_score].open("/ergo_pred/" + ergo_score.lower() + ':o')
 
 		return True
 
 	def close(self):
-		self.port_posture.close()
+		"""Close all the ports used by the module
+		"""
+		self.in_port_posture.close()
+		for ergo_score in self.list_out_port_ergo:
+			self.list_out_port_ergo[ergo_score].close()
 		self.handlerPort.close()
 		return True
 
 	def updateModule(self):
-		b_in = self.port_posture.read(True)
+		"""Read the data of posture and send the updated ergonomic scores
+		"""
+		b_in = self.in_port_posture.read(True)
 
 		data = b_in.toString().split(' ')
 		value = list(map(float, data))
 
-		self.posture.update_posture(value)
-		self.ergo_assessment.compute_ergo_scores(self.posture)
+		self._posture.update_posture(value)
+		self._ergo_assessment.compute_ergo_scores(self.posture)
 
-		for ergo_score in self.list_port_ergo:
-			b_out = self.list_port_ergo[ergo_score].prepare()
+		for ergo_score in self.list_out_port_ergo:
+			b_out = self.list_out_port_ergo[ergo_score].prepare()
 			b_out.clear()
-			b_out.addDouble(self.ergo_assessment[ergo_score])
-			self.list_port_ergo[ergo_score].write()
+			b_out.addDouble(self._ergo_assessment[ergo_score])
+			self.list_out_port_ergo[ergo_score].write()
 
 		return True
 		

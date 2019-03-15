@@ -14,28 +14,29 @@ class ErgoAssessment:
 	ergonomic worksheet from industry.
 
 	Example:
-		$ from ErgoAssessment import ErgoAssessment
-		$ ergo_assessment = ErgoAssessment("rula_config.json")
-		$ ergo_assessment.compute_ergo_scores(posture)
-		$ RULA_score = ergo_assessment['TABLE_RULA_C']
+		>>> from ErgoAssessment import ErgoAssessment
+		>>> ergo_assessment = ErgoAssessment("rula_config.json")
+		>>> ergo_assessment.compute_ergo_scores(posture)
+		>>> RULA_score = ergo_assessment['TABLE_RULA_C']
 
 	Attributes:
-		_list_ergo_score: a list of dictionnary represented the ergonomics
+		_list_ergo_score (dict): a dictionnary containing the ergonomics
 			score to compute with:
 			{
-				"name": a string to represent the ergonomic score
-				"value": a float or int depending the type of ergonomic score
-				"info": a dictionnary of all the parameter needed to compute the score
+				"value (int/float)": the measure for the ergonomic score
+				"info (dict)": contains all the parameter needed to compute the score
 			}
+
 		_config_file: a string of the name of the configuration file (.json) such as:
 			rula_config.json
 			reba_config.json
 	"""
 
 	def __init__(self, config_file):
-		"""
-		input: a configuration file in json with the description of all the 
-		ergonomics score used by the module
+		"""Constructor
+		Args: 
+			config_file (string): a configuration file in json with the 
+				description of all the ergonomics score used by the module
 		"""
 		self._config_file = config_file
 		self._list_ergo_score = dict()
@@ -43,8 +44,7 @@ class ErgoAssessment:
 
 	def _load_config_file(self):
 		"""
-		This function initialize the _list_ergo_score attributes according to
-		configuration file.
+		Initializes the _list_ergo_score according to the configuration file.
 		All ergonomic score are initialized with the value 'NONE'.
 		"""
 		with open(self._config_file, 'r') as f:
@@ -63,9 +63,10 @@ class ErgoAssessment:
 				}
 
 	def compute_ergo_scores(self, posture):
-		"""
-		Compute all the ergonomic score related to the posture in parameter
-		input: a list or array <nbr_dof, 1> with all joint angle values
+		"""Compute all the ergonomic score related to the posture in parameter
+
+		Args: 
+			posture (list): the joint angle values of the human skeleton
 		"""
 		self._initiliaze_score()
 		self.posture = posture
@@ -73,10 +74,10 @@ class ErgoAssessment:
 			self._compute_score(self._list_ergo_score[ergo_score])
 
 	def _compute_score(self, ergo_score):
-		"""
-		Compute a specific ergonomic score send in parameter.
-		input: ergo_score is a dictionnary of one of the ergonomic score from
-		_list_ergo_score.
+		"""Compute a specific ergonomic score send in parameter
+
+		Args: 
+			ergo_score (dict): One of the ergonomic score from _list_ergo_score
 		"""
 		if not(ergo_score['info']["related_score"] == "none"):
 			for related_score in ergo_score['info']["related_score"]:
@@ -93,8 +94,7 @@ class ErgoAssessment:
 			ergo_score['value'] = ergo_score['info']['value']
 
 	def _compute_joint_score(self, local_score):
-		"""
-		Compute the local ergonomic score of the joint related to this score
+		"""Compute the local ergonomic score of the joint related to this score
 		"""
 		ergo_value = 0
 		related_joint = local_score['info']['related_joint']
@@ -109,8 +109,7 @@ class ErgoAssessment:
 		return ergo_value
 
 	def _compute_table_score(self, table_score):
-		""" 
-		Compute the ergonomic score related to a table
+		""" Compute the ergonomic score related to a table
 		"""
 		related_score = table_score['info']['related_score']
 		ergo_value = table_score['info']['table']
@@ -121,8 +120,7 @@ class ErgoAssessment:
 		return ergo_value
 
 	def _compute_max_score(self, local_score):
-		"""
-		Return the maximum ergonomic score in a list
+		"""Return the maximum ergonomic score in a list
 		"""
 		related_score = local_score['info']['related_score']
 		ergo_value = []
@@ -132,6 +130,8 @@ class ErgoAssessment:
 		return ergo_value
 
 	def _initiliaze_score(self):
+		"""Initialize all the score to the 'NONE' value
+		"""
 		for ergo_score in self._list_ergo_score:
 			self._list_ergo_score[ergo_score]['value'] = "NONE"
 
@@ -139,9 +139,7 @@ class ErgoAssessment:
 		return self._list_ergo_score
 
 	def get_ergo_score(self, name_score): 
-		"""
-		Return the dictionnary of the ergonomic score with the name in input.
-		name_score: string
+		"""Return the dictionnary of the ergonomic score with the name in input.
 		"""
 		try:
 			return self._list_ergo_score[name_score]
@@ -149,8 +147,7 @@ class ErgoAssessment:
 			raise KeyError(name_score + ' is not in _list_ergo_score')
 
 	def __getitem__(self, name_score):
-		"""
-		Return the value of an ergonomic score with the name in input
+		"""Return the value of an ergonomic score with the name in input
 		"""
 		try:
 			return self._list_ergo_score[name_score]['value']
@@ -158,8 +155,7 @@ class ErgoAssessment:
 			raise KeyError(name_score + ' is not in _list_ergo_score')
 
 	def __setitem__(self, name_score, value):
-		"""
-		Set the value of an ergonomic score with the name in input
+		"""Set the value of an ergonomic score with the name in input
 		"""
 		try:
 			self._list_ergo_score[name_score]['value'] = value
