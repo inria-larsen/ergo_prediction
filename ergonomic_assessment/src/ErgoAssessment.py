@@ -1,29 +1,6 @@
-""" ErgoAssessment Class
-
+"""
 Author: Adrien Malaisé
 email: adrien.malaise@inria.fr
-
-This Class is used to compute automatic ergonomics assessment based on 
-ergonomic worksheet from industry.
-
-Example:
-	$ from ErgoAssessment import ErgoAssessment
-	$ ergo_assessment = ErgoAssessment("rula_config.json")
-	$ ergo_assessment.compute_ergo_scores(posture)
-	$ RULA_score = ergo_assessment['TABLE_RULA_C']
-
-Attributes:
-	_list_ergo_score: a list of dictionnary represented the ergonomics
-		score to compute with:
-			{
-				"name": a string to represent the ergonomic score
-				"value": a float or int depending the type of ergonomic score
-				"info": a dictionnary of all the parameter needed to compute the score
-			}
-	config_file: a string of the name of the configuration file (.json) such as:
-		rula_config.json
-		reba_config.json
-
 """
 
 import json
@@ -33,10 +10,28 @@ from HumanPosture import HumanPosture
 
 class ErgoAssessment: 
 	"""
-	This class is used to compute ergonomics score according to a 
-	configuration file in parameter.
-	Scores are both local and global.
+	This Class is used to compute automatic ergonomics assessment based on 
+	ergonomic worksheet from industry.
+
+	Example:
+		$ from ErgoAssessment import ErgoAssessment
+		$ ergo_assessment = ErgoAssessment("rula_config.json")
+		$ ergo_assessment.compute_ergo_scores(posture)
+		$ RULA_score = ergo_assessment['TABLE_RULA_C']
+
+	Attributes:
+		_list_ergo_score: a list of dictionnary represented the ergonomics
+			score to compute with:
+			{
+				"name": a string to represent the ergonomic score
+				"value": a float or int depending the type of ergonomic score
+				"info": a dictionnary of all the parameter needed to compute the score
+			}
+		_config_file: a string of the name of the configuration file (.json) such as:
+			rula_config.json
+			reba_config.json
 	"""
+
 	def __init__(self, config_file):
 		"""
 		input: a configuration file in json with the description of all the 
@@ -52,7 +47,6 @@ class ErgoAssessment:
 		configuration file.
 		All ergonomic score are initialized with the value 'NONE'.
 		"""
-		# TODO: add test if score already in list
 		with open(self._config_file, 'r') as f:
 			config_ergo = json.load(f)
 
@@ -98,7 +92,6 @@ class ErgoAssessment:
 		elif ergo_score['info']["type_score"] == "value":
 			ergo_score['value'] = ergo_score['info']['value']
 
-
 	def _compute_joint_score(self, local_score):
 		"""
 		Compute the local ergonomic score of the joint related to this score
@@ -142,27 +135,33 @@ class ErgoAssessment:
 		for ergo_score in self._list_ergo_score:
 			self._list_ergo_score[ergo_score]['value'] = "NONE"
 
+	def get_list_score(self):
+		return self._list_ergo_score
 
 	def get_ergo_score(self, name_score): 
 		"""
 		Return the dictionnary of the ergonomic score with the name in input.
 		name_score: string
 		"""
-		# TODO add exception if name_score doesn't exist
-		if name_score in self._list_ergo_score:
+		try:
 			return self._list_ergo_score[name_score]
+		except KeyError:
+			raise KeyError(name_score + ' is not in _list_ergo_score')
 
 	def __getitem__(self, name_score):
 		"""
 		Return the value of an ergonomic score with the name in input
 		"""
-		# TODO add exception if name_score not in list
-		if name_score in self._list_ergo_score:
+		try:
 			return self._list_ergo_score[name_score]['value']
-
+		except KeyError:
+			raise KeyError(name_score + ' is not in _list_ergo_score')
 
 	def __setitem__(self, name_score, value):
 		"""
 		Set the value of an ergonomic score with the name in input
 		"""
-		self._list_ergo_score[name_score]['value'] = value
+		try:
+			self._list_ergo_score[name_score]['value'] = value
+		except KeyError as err:
+			raise KeyError(name_score + ' is not in _list_ergo_score')
