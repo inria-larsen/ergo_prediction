@@ -1,4 +1,10 @@
 {
+	"_comments": {
+		"//": "This configuration can be used to automatically compute ",
+		"//": "scores related to the ergonomics assessment worskheet RULA ",
+		"//": "https://ergo-plus.com/wp-content/uploads/RULA.pdf"
+	},
+
 	"HUMAN_SKELETON":{
 		"config_file": "config/mapping_joints.json"
 	},
@@ -93,8 +99,9 @@
 		},
 
 		"LEGS_SCORE":{
-			"type_score": "position",
-			"related_score": "none"
+			"type_score": "value",
+			"related_score": "none",
+			"value": 1
 		},
 
 		"TABLE_RULA_B": {
