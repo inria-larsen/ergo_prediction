@@ -61,29 +61,6 @@ class ErgonomicAssessmentModule(yarp.RFModule):
 			self.list_port_ergo[ergo_score].write()
 
 		return True
-
-
-class CallbackData(yarp.BottleCallback):
-	def __init__(self, size_buffer):
-		yarp.BottleCallback.__init__(self)
-		self.port = yarp.Port()
-		self.buffer = []
-		self.size_buffer = size_buffer
-
-	def onRead(self, bot, *args, **kwargs):
-		data = bot.toString().split(' ')
-		value = list(map(float, data))
-		self.buffer.append(value)
-		if(len(self.buffer) > self.size_buffer):
-			del self.buffer[0]
-		return value
-
-	def get_data(self):
-		data = self.buffer
-		self.buffer = []
-		return data
-
-
 		
 if __name__=="__main__":
 	yarp.Network.init()
