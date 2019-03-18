@@ -6,7 +6,7 @@
 			"roll": 0,
 			"yaw": 1
 		},
-		"xsens_joints": ["jL5S1", 
+		"input_joints": ["jL5S1",
 			"jL4S3", 
 			"jL1T2", 
 			"jT9T8",

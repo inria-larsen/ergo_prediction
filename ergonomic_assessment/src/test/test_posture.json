@@ -1,0 +1,44 @@
+{
+	"joints": {
+		"jTorso": {
+			"order": 0,
+			"value": [0.0, 0.0, 0.0]
+		},
+		"jNeck": {
+			"order": 1,
+			"value": [0.0, 0.0, 0.0]
+		},
+		"jRShoulder": {
+			"order": 2,
+			"value": [0.0, 0.0, 0.0]
+		},
+		"jRElbow": {
+			"order": 3,
+			"value": [90.0, 0.0, 0.0]
+		},
+		"jRWrist": {
+			"order": 4,
+			"value": [0.0, 0.0, 0.0]
+		},
+		"jRKnee": {
+			"order": 5,
+			"value": [0.0, 0.0, 0.0]
+		},
+		"jLShoulder": {
+			"order": 6,
+			"value": [0.0, 0.0, 0.0]
+		},
+		"jLElbow": {
+			"order": 7,
+			"value": [90.0, 0.0, 0.0]
+		},
+		"jLWrist": {
+			"order": 8,
+			"value": [0.0, 0.0, 0.0]
+		},
+		"jLKnee": {
+			"order": 9,
+			"value": [0.0, 0.0, 0.0]
+		}
+	}
+}

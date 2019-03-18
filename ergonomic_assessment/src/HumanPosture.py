@@ -20,7 +20,7 @@ class HumanPosture():
 
 		input_param = param_mapping['INPUT_JOINTS']
 		self.input_dof = input_param['nbr_dof']
-		self.input_joints = input_param['xsens_joints']
+		self.input_joints = input_param['input_joints']
 		self.dimensions = input_param['dimensions']
 
 		self.mapping_joints = param_mapping['REDUCED_JOINTS']
@@ -50,6 +50,16 @@ class HumanPosture():
 			 	id_joint = self.get_id_input_joint(i_joint)
 			 	dim = self.dimensions[dim_joint]
 			 	self.joint_reduce_body[num_joint] += np.deg2rad(self.joints_whole_body[id_joint*3+dim])
+
+	def set_posture(self, joints_dict):
+		self.joints_whole_body = np.zeros(self.input_dof)
+		count = 0
+		for joint, num_joint in zip(self.input_joints, range(self.input_dof)):
+			for i in range(len(joints_dict[joint]["value"])):
+				self.joints_whole_body[count] = joints_dict[joint]["value"][i]
+				count += 1
+
+		self.mapping_posture()
 
 
 	def get_id_input_joint(self, name_joint):

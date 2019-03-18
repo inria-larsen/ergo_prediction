@@ -34,6 +34,7 @@ class ErgoAssessment:
 
 	def __init__(self, config_file):
 		"""Constructor
+
 		Args: 
 			config_file (string): a configuration file in json with the 
 				description of all the ergonomics score used by the module
@@ -43,8 +44,7 @@ class ErgoAssessment:
 		self._load_config_file()
 
 	def _load_config_file(self):
-		"""
-		Initializes the _list_ergo_score according to the configuration file.
+		"""Initializes the _list_ergo_score according to the configuration file.
 		All ergonomic score are initialized with the value 'NONE'.
 		"""
 		with open(self._config_file, 'r') as f:
@@ -102,7 +102,7 @@ class ErgoAssessment:
 			joint_angle = self.posture.get_joint_angle(joint)
 			for threshold, i in zip(local_score['info']['threshold'][num_joint], 
 				range(len(local_score['info']['threshold'][num_joint]))):
-				if threshold[0] < joint_angle < threshold[1]:
+				if threshold[0] < joint_angle <= threshold[1]:
 					ergo_temp = local_score['info']['related_value'][num_joint][i]
 			ergo_value += ergo_temp
 

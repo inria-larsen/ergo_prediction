@@ -1,0 +1,107 @@
+{
+	"mapping_type": "simple",
+
+
+	"INPUT_JOINTS":{
+			"nbr_dof": 30,
+			"dimensions": {
+				"pitch": 0,
+				"roll": 1,
+				"yaw": 2
+			},
+			"input_joints": ["jTorso", 
+				"jNeck", 
+				"jRShoulder", 
+				"jRElbow",
+				"jRWrist",
+				"jRKnee",
+				"jLShoulder",
+				"jLElbow",
+				"jLWrist",
+				"jLKnee"]
+		},
+
+	"REDUCED_JOINTS":{
+		"jTorso": {
+			"input_joints": ["jTorso"],
+			"mapping":{
+				"pitch": 1,
+				"roll": 1,
+				"yaw": 1
+			}
+		},
+
+		"jNeck": {
+			"input_joints": ["jNeck"],
+			"mapping":{
+				"pitch": 1,
+				"roll": 1,
+				"yaw": 1
+			}
+		},
+
+		"jRShoulder": {
+			"input_joints": ["jRShoulder"],
+			"mapping":{
+				"pitch": 1,
+				"roll": 1,
+				"yaw": 1
+			}
+		},
+
+		"jRElbow": {
+			"input_joints": ["jRElbow"],
+			"mapping":{
+				"pitch": 1
+			}
+		},
+
+		"jRWrist": {
+			"input_joints": ["jRWrist"],
+			"mapping":{
+				"pitch": 1,
+				"roll": 1,
+				"yaw": 1
+			}
+		},
+
+		"jRKnee": {
+			"input_joints": ["jRKnee"],
+			"mapping":{
+				"pitch": 1
+			}
+		},
+
+		"jLShoulder": {
+			"input_joints": ["jLShoulder"],
+			"mapping":{
+				"pitch": 1,
+				"roll": 1,
+				"yaw": 1
+			}
+		},
+
+		"jLElbow": {
+			"input_joints": ["jLElbow"],
+			"mapping":{
+				"pitch": 1
+			}
+		},
+
+		"jLWrist": {
+			"input_joints": ["jLWrist"],
+			"mapping":{
+				"pitch": 1,
+				"roll": 1,
+				"yaw": 1
+			}
+		},
+
+		"jLKnee": {
+			"input_joints": ["jLKnee"],
+			"mapping":{
+				"pitch": 1
+			}
+		}
+	}
+}

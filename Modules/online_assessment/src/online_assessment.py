@@ -77,7 +77,7 @@ class ErgonomicAssessmentModule(yarp.RFModule):
 		value = list(map(float, data))
 
 		self._posture.update_posture(value)
-		self._ergo_assessment.compute_ergo_scores(self.posture)
+		self._ergo_assessment.compute_ergo_scores(self._posture)
 
 		for ergo_score in self.list_out_port_ergo:
 			b_out = self.list_out_port_ergo[ergo_score].prepare()
