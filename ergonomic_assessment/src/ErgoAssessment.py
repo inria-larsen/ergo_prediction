@@ -27,7 +27,7 @@ class ErgoAssessment:
 				"info (dict)": contains all the parameter needed to compute the score
 			}
 
-		_config_file: a string of the name of the configuration file (.json) such as:
+		_config_file (string): name of the configuration file (.json) such as:
 			rula_config.json
 			reba_config.json
 	"""

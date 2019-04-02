@@ -1,11 +1,14 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+import matplotlib.patches as mpatches
+from matplotlib.pyplot import cm
 import os
 import seaborn as sns
 from mpl_toolkits.mplot3d import Axes3D
 # import cv2
 from copy import deepcopy
+import pandas as pd
 
 
 def draw_distribution(score, list_states, real_labels):
@@ -160,6 +163,42 @@ def video_sequence(real_labels, predict_labels, video_input, video_output):
 		out.release()
 		cv2.destroyAllWindows()
 		return
+
+def plot_ergo_score(ax, name_score, data, timestamps):
+	ax.plot(timestamps, data, color='b')
+	ax.set_title(name_score)
+	ax.set_ylabel('score')
+	# ax.set_xlabel('time (s)')
+
+def plot_list_states(ax, labels, timestamps, list_states):
+	color = cm.rainbow(np.linspace(0,1,len(list_states)))
+
+	t_transition = [0]
+	for t in range(1, len(labels)):
+		if not(labels[t] == labels[t-1]):
+			t_transition.append(t)
+	t_transition.append(len(timestamps)-1)
+
+	for t in range(1, len(t_transition)):
+		id_states = list_states.index(labels[t_transition[t-1]])
+		# ax.axvspan(timestamps[t_transition[t-1]], timestamps[t_transition[t]], ymin=0, ymax=1, alpha=0.5, color=color[id_states])
+
+	legend = []
+	for i in range(len(list_states)):
+		legend.append(mpatches.Patch(color=color[i], label=list_states[i]))
+	plt.legend(handles=legend)
+	ax.set_xlabel('time (s)')
+	ax.set_title('Current Action')
+	# ax.yaxis.set_visible(False)
+	plt.axis('off')
+
+
+
+def plot_hist_score(list_states, labels, data):
+	df_data = pd.DataFrame({'states': labels, 'score': data})
+	df_group = df_data.groupby(['states'])
+	ax = df_data.boxplot(grid=False, column='score', by='states')
+	return
 
 
 
