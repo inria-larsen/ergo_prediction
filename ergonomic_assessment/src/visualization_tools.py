@@ -198,7 +198,54 @@ def plot_hist_score(list_states, labels, data):
 	df_data = pd.DataFrame({'states': labels, 'score': data})
 	df_group = df_data.groupby(['states'])
 	ax = df_data.boxplot(grid=False, column='score', by='states')
-	return
+
+def plot_state_latentspace(data, labels):
+	fig = plt.figure(figsize=(8,8))
+	ax = fig.gca()
+
+	
+	df_data = pd.DataFrame({'states': labels, 'dim_1': data[0], 'dim_2': data[1]})
+	df_group = df_data.groupby(['states'])
+
+	for data_state in df_group:
+		x = data_state[1]['dim_1']
+		y = data_state[1]['dim_2']
+
+		if len(x) < 2:
+			continue
+
+	# Define the borders
+	# deltaX = (max(data[0]) - min(data[0]))/10
+	# deltaY = (max(data[1]) - min(data[1]))/10
+
+		deltaX = 0.01
+		deltaY = 0.01
+
+		xmin = min(x) - deltaX
+		xmax = max(x) + deltaX
+
+		ymin = min(y) - deltaY
+		ymax = max(y) + deltaY
+
+		xx, yy = np.mgrid[xmin:xmax:100j, ymin:ymax:100j]
+
+		positions = np.vstack([xx.ravel(), yy.ravel()])
+		values = np.vstack([x, y])
+		kernel = st.gaussian_kde(values)
+		f = np.reshape(kernel(positions).T, xx.shape)
+
+		
+
+		ax.set_xlim(xmin, xmax)
+		ax.set_ylim(ymin, ymax)
+		cfset = ax.contourf(xx, yy, f, cmap='coolwarm')
+		ax.imshow(np.rot90(f), cmap='coolwarm', extent=[xmin, xmax, ymin, ymax])
+		cset = ax.contour(xx, yy, f, colors='k')
+		ax.clabel(cset, inline=1, fontsize=10)
+		ax.set_xlabel('X')
+		ax.set_ylabel('Y')
+		plt.title('2D Gaussian Kernel density estimation')
+
 
 
 
