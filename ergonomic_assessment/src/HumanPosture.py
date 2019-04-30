@@ -1,5 +1,7 @@
 import numpy as np
 import json
+import torch
+import math
 
 class HumanPosture():
 	"""
@@ -22,6 +24,8 @@ class HumanPosture():
 		self.input_dof = input_param['nbr_dof']
 		self.input_joints = input_param['input_joints']
 		self.dimensions = input_param['dimensions']
+
+		self.skeleton_param = param_mapping['SKELETON']
 
 		self.mapping_joints = param_mapping['REDUCED_JOINTS']
 
@@ -74,10 +78,36 @@ class HumanPosture():
 		id_joint = self.list_all_joints.index(name_joint)
 		return self.joint_reduce_body[id_joint]
 
+	def get_skeleton(self):
+		size = 1.75
+
+		list_points = self.skeleton_param['list_points']
+		self.skeleton = np.zeros((len(list_points) + 1, 3))
+
+		for num_point, point in enumerate(list_points):
+			print(self.skeleton_param['segments'][point])
+			id_joint = self.get_id_input_joint(self.skeleton_param['segments'][point]['links'][0])
+			length = size * self.skeleton_param['segments'][point]['length']
+			print(length)
+			print()
+			# self.skeleton[num_point+1, 2] = 
+			print(self.joints_whole_body[id_joint*3:id_joint*3+3])
+
+		return
 
 
+	def update_posture_tensor(self, input_joints):
+		self.joints_whole_body = input_joints
+		self.joint_reduce_body = torch.zeros([self.reduced_dof])
+		self.mapping_posture_tensor()
 
+	def mapping_posture_tensor(self):
+		num_dof = 0
+		self.joint_reduce_body = torch.zeros([self.reduced_dof])
+		for joint, num_joint in zip(self.list_all_joints, range(self.reduced_dof)):
+			name_joint, dim_joint = joint.split('_')
 
-
-
-		
+			for i_joint in self.mapping_joints[name_joint]['input_joints']:
+			 	id_joint = self.get_id_input_joint(i_joint)
+			 	dim = self.dimensions[dim_joint]
+			 	self.joint_reduce_body[num_joint] += self.joints_whole_body[id_joint*3+dim]*(2*math.pi)/360		
