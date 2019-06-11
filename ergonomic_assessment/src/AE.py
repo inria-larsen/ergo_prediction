@@ -5,18 +5,20 @@ import torch.nn.functional as F
 
 
 class AutoEncoder(nn.Module):
-	def __init__(self):
+	def __init__(self, input_dim, latent_variable_dim, hidden_dim):
 		super(AutoEncoder, self).__init__()
 
 		self.encoder = nn.Sequential(
-			nn.Linear(66, 2),
+			nn.Linear(input_dim, hidden_dim)
+			,
 			nn.ReLU(True),
-			nn.Linear(10, 2),
+			nn.Linear(hidden_dim, latent_variable_dim),
 			nn.ReLU(True))
 		self.decoder = nn.Sequential(
-			nn.Linear(2, 66),
+			nn.Linear(latent_variable_dim, hidden_dim)
+			,
 			nn.ReLU(True),
-			nn.Linear(10, 66),
+			nn.Linear(hidden_dim, input_dim),
 			nn.Sigmoid())
 
 	def forward(self, x):
@@ -26,22 +28,23 @@ class AutoEncoder(nn.Module):
 
 
 class VariationalAutoencoder(nn.Module):
-	def __init__(self, latent_variable_dim):
-		super(VAE, self).__init__()
-		self.fc1 = nn.Linear(66, 10)
-		self.fc2m = nn.Linear(10, latent_variable_dim) # use for mean
-		self.fc2s = nn.Linear(10, latent_variable_dim) # use for standard deviation
+	def __init__(self, input_dim, latent_variable_dim, hidden_dim):
+		super(VariationalAutoencoder, self).__init__()
+		self.input_dim = input_dim
+		self.fc1 = nn.Linear(input_dim, hidden_dim)
+		self.fc2m = nn.Linear(hidden_dim, latent_variable_dim) # use for mean
+		self.fc2s = nn.Linear(hidden_dim, latent_variable_dim) # use for standard deviation
 		
-		self.fc3 = nn.Linear(latent_variable_dim, 10)
-		self.fc4 = nn.Linear(10, 66)
+		self.fc3 = nn.Linear(latent_variable_dim, hidden_dim)
+		self.fc4 = nn.Linear(hidden_dim, input_dim)
 		
 	def reparameterize(self, log_var, mu):
 		s = torch.exp(0.5*log_var)
-		eps = torch.rand_like(s) # generate a iid standard normal same shape as s
+		eps = torch.rand_like(s)
 		return eps.mul(s).add_(mu)
 		
 	def forward(self, input):
-		x = input.view(-1, 66)
+		x = input.view(-1, self.input_dim)
 		x = torch.relu(self.fc1(x))
 		log_s = self.fc2s(x)
 		m = self.fc2m(x)
@@ -49,7 +52,7 @@ class VariationalAutoencoder(nn.Module):
 		
 		x = self.decode(z)
 		
-		return x, m, log_s
+		return x, m
 	
 	def decode(self, z):
 		x = torch.relu(self.fc3(z))
