@@ -4,6 +4,8 @@ import torch
 import math
 import tools
 from urdf_parser_py.urdf import URDF
+from matplotlib import animation
+import matplotlib.pyplot as plt
 
 
 # Define segments (between origins of two consecutive links)
@@ -159,7 +161,6 @@ class Skeleton():
 		H = H_root * H
 		return H
 
-
 	def joint2pos(self):
 		"""
 		Convert the joint angle data to cartesian position
@@ -194,10 +195,14 @@ class Skeleton():
 			self.position[id_end*3+1] = Hend[1,3]
 			self.position[id_end*3+2] = Hend[2,3]
 
-	def visualise_from_joints(self, ax):
+	def visualise_from_joints(self, color='b'):
 		"""
 		Plot the skeleton based on joint angle data
 		"""
+		ax = plt.gca()
+
+		lines = []
+
 		ax.set_xlim(-2,2)
 		ax.set_ylim(-2,2)
 		ax.set_zlim(-1,1)
@@ -213,8 +218,34 @@ class Skeleton():
 			y_end = self.position[id_end*3+1]
 			z_end = self.position[id_end*3+2]
 
-			ax.plot([x_ini, x_end],	[y_ini, y_end], [z_ini, z_end], 'm')
+			line, = ax.plot([x_ini, x_end],	[y_ini, y_end], [z_ini, z_end], 'm', color=color)
+			lines.append(line)
 
-		return ax
+		return lines
 
-		
+	def animate_skeleton(self, joint_seq):
+		fig = plt.gcf()
+		ax = plt.gca()
+
+		lines = self.visualise_from_joints()
+
+		def animate(i):
+			self.update_posture(joint_seq[i])
+
+			for num_seg, seg in enumerate(Xsens_segments):
+				id_ini = Xsens_bodies.index(seg[0])
+				id_end = Xsens_bodies.index(seg[1])
+
+				line_length = np.linalg.norm(self.position[id_end*3:id_end*3+3]-self.position[id_ini*3:id_ini*3+3])
+
+				lines[num_seg].set_data([self.position[id_ini*3],self.position[id_end*3]], 
+					[self.position[id_ini*3+1],self.position[id_end*3+1]])
+				lines[num_seg].set_3d_properties([self.position[id_ini*3+2],self.position[id_end*3+2]])
+
+		anim=animation.FuncAnimation(fig,animate,repeat=False,blit=False,frames=len(joint_seq), interval=20)
+
+		plt.show()
+		return fig
+
+	def get_joint_mapping():
+		return joint_mapping
