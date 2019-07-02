@@ -99,10 +99,8 @@ joint_mapping = {
 
 class Skeleton():
 	"""
-	This class is used to map the human whole body posture  of 66 Degrees of freedom into 
-	a reduced skeleton.
-	The output skeleton is defined by a json parameter file describing the joints used and
-	their reference to the global skeleton.
+	This class is used to map the human skeleton of 66 Degrees of freedom from Xsens into 
+	a urdf model.
 	"""
 
 	def __init__(self, urdf_file):
@@ -110,11 +108,37 @@ class Skeleton():
 		self.joint_angle = np.zeros(len(joint_mapping))
 		self.position = np.zeros(len(Xsens_bodies)*3)
 
-	def update_posture(self, input_joints):
+	def update_posture(self, input_joints, flag_pos = False):
 		self.joint_angle = input_joints
-		self.joint2pos()
+		if flag_pos:
+			self.joint2pos()
+		return self.position
 
-	def getSegmentPose(self, linkname, q):
+	def get_position(self):
+		return self.position
+
+	def get_position_segment(self, name_segment):
+		id_segment = Xsens_bodies.index(seg[0])
+		return self.position[id_point*3:id_point*3+3]
+
+	def get_segment_position(self, linkname, q = dict()):
+		"""
+		Compute position data from joint angle data
+		"""
+		if len(q) == 0:
+			for j in self.urdf_model.joints:
+				if j.type != 'fixed':
+					q[j.name] = joint_mapping[j.name][1] * self.joint_angle[joint_mapping[j.name][0]]*np.pi/180
+			position_root = [0,0,0]
+			quaternion_root = [1, 0, 0, 0]
+			q['root_X'] = position_root[0]
+			q['root_Y'] = position_root[1]
+			q['root_Z'] = position_root[2]
+			q['root_qw'] = quaternion_root[0]
+			q['root_qx'] = quaternion_root[1]
+			q['root_qy'] = quaternion_root[2]
+			q['root_qz'] = quaternion_root[3]
+
 		root = self.urdf_model.get_root()
 		bodies = self.urdf_model.get_chain(root, linkname)		
 		H = np.matrix([[1., 0., 0., 0.], [0., 1., 0., 0.], [0., 0., 1., 0.], [0., 0., 0., 1.]])
@@ -159,7 +183,7 @@ class Skeleton():
 					[R[2,0], R[2,1], R[2,2], q['root_Z']], 
 					[0., 0., 0., 1.]])
 		H = H_root * H
-		return H
+		return np.asarray(H)
 
 	def joint2pos(self):
 		"""
@@ -183,23 +207,30 @@ class Skeleton():
 		q['root_qz'] = quaternion_root[3]
 
 		for num_seg, seg in enumerate(Xsens_segments):
-			Hini = self.getSegmentPose(seg[0], q)
+			Hini = self.get_segment_position(seg[0], q)
 			id_ini = Xsens_bodies.index(seg[0])
-			self.position[id_ini*3] = Hini[0,3]
-			self.position[id_ini*3+1] = Hini[1,3]
-			self.position[id_ini*3+2] = Hini[2,3]
+			self.position[id_ini*3:id_ini*3+3] = Hini[0:3,3]
+			# self.position[id_ini*3] = Hini[0,3]
+			# self.position[id_ini*3+1] = Hini[1,3]
+			# self.position[id_ini*3+2] = Hini[2,3]
 
-			Hend = self.getSegmentPose(seg[1], q)
+			Hend = self.get_segment_position(seg[1], q)
 			id_end = Xsens_bodies.index(seg[1])
-			self.position[id_end*3] = Hend[0,3]
-			self.position[id_end*3+1] = Hend[1,3]
-			self.position[id_end*3+2] = Hend[2,3]
+			self.position[id_end*3:id_end*3+3] = Hend[0:3,3]
+			# self.position[id_end*3] = Hend[0,3]
+			# self.position[id_end*3+1] = Hend[1,3]
+			# self.position[id_end*3+2] = Hend[2,3]
 
-	def visualise_from_joints(self, color='b'):
+	def visualise_from_joints(self, data = [], color='b'):
 		"""
 		Plot the skeleton based on joint angle data
 		"""
+		if len(data) > 0:
+			self.update_posture(data)
+
 		ax = plt.gca()
+
+		ax.set_title('Skeleton reconstruction')
 
 		lines = []
 
@@ -223,29 +254,35 @@ class Skeleton():
 
 		return lines
 
-	def animate_skeleton(self, joint_seq):
+	def animate_skeleton(self, joint_seq_list, color=['b'], save=False):
+		"""
+		Take a sequence of joint angle data to animate the skeleton.
+		"""
+
 		fig = plt.gcf()
 		ax = plt.gca()
 
-		lines = self.visualise_from_joints()
+		lines = []
+
+		for num_seq, sequence in enumerate(joint_seq_list):
+			lines.append(self.visualise_from_joints(sequence[0], color=color[num_seq]))
 
 		def animate(i):
-			self.update_posture(joint_seq[i])
+			for num_seq, sequence in enumerate(joint_seq_list):
+				self.update_posture(sequence[i])
 
-			for num_seg, seg in enumerate(Xsens_segments):
-				id_ini = Xsens_bodies.index(seg[0])
-				id_end = Xsens_bodies.index(seg[1])
+				for num_seg, seg in enumerate(Xsens_segments):
+					id_ini = Xsens_bodies.index(seg[0])
+					id_end = Xsens_bodies.index(seg[1])
 
-				line_length = np.linalg.norm(self.position[id_end*3:id_end*3+3]-self.position[id_ini*3:id_ini*3+3])
+					lines[num_seq][num_seg].set_data([self.position[id_ini*3],self.position[id_end*3]], 
+						[self.position[id_ini*3+1],self.position[id_end*3+1]])
+					lines[num_seq][num_seg].set_3d_properties([self.position[id_ini*3+2],self.position[id_end*3+2]])
 
-				lines[num_seg].set_data([self.position[id_ini*3],self.position[id_end*3]], 
-					[self.position[id_ini*3+1],self.position[id_end*3+1]])
-				lines[num_seg].set_3d_properties([self.position[id_ini*3+2],self.position[id_end*3+2]])
+		anim=animation.FuncAnimation(fig,animate,repeat=False,blit=False,frames=len(joint_seq_list[0]), interval=20)
 
-		anim=animation.FuncAnimation(fig,animate,repeat=False,blit=False,frames=len(joint_seq), interval=20)
+		if save:
+			anim.save('skeleton_reconstruct.mp4',writer=animation.FFMpegWriter(fps=24))
 
 		plt.show()
 		return fig
-
-	def get_joint_mapping():
-		return joint_mapping

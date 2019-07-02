@@ -20,11 +20,11 @@
 			"jLeftShoulder",
 			"jLeftElbow",
 			"jLeftWrist",
-			"JRightHip",
+			"jRightHip",
 			"jRightKnee",
 			"jRightAnkle",
 			"jRightBallFoot",
-			"JLeftHip",
+			"jLeftHip",
 			"jLeftKnee",
 			"jLeftAnkle",
 			"jLeftBallFoot"]
@@ -61,7 +61,9 @@
 		"jRElbow": {
 			"input_joints": ["jRightElbow"],
 			"mapping":{
-				"pitch": 1
+				"pitch": 1,
+				"roll": 1,
+				"yaw": 1
 			}
 		},
 
@@ -73,11 +75,21 @@
 				"yaw": 1
 			}
 		},
+		"jRHip": {
+			"input_joints": ["jRightHip"],
+			"mapping":{
+				"pitch": 1,
+				"roll": 1,
+				"yaw": 1
+			}
+		},
 
 		"jRKnee": {
 			"input_joints": ["jRightKnee"],
 			"mapping":{
-				"pitch": 1
+				"pitch": 1,
+				"roll": 1,
+				"yaw": 1
 			}
 		},
 
@@ -93,12 +105,21 @@
 		"jLElbow": {
 			"input_joints": ["jLeftElbow"],
 			"mapping":{
-				"pitch": 1
+				"pitch": 1,
+				"roll": 1,
+				"yaw": 1
 			}
 		},
-
 		"jLWrist": {
 			"input_joints": ["jLeftWrist"],
+			"mapping":{
+				"pitch": 1,
+				"roll": 1,
+				"yaw": 1
+			}
+		},
+		"jLHip": {
+			"input_joints": ["jLeftHip"],
 			"mapping":{
 				"pitch": 1,
 				"roll": 1,
@@ -109,11 +130,147 @@
 		"jLKnee": {
 			"input_joints": ["jLeftKnee"],
 			"mapping":{
-				"pitch": 1
+				"pitch": 1,
+				"roll": 1,
+				"yaw": 1
 			}
 		}
+	},
+
+	"SKELETON":{
+		"list_segments": {
+			"PelvisR": {
+				"length": 0.0955,
+				"init_dir": [0, 1, 0],
+				"points": ["jTorso", "jRHip"],
+				"parent": "root"
+			},
+			"PelvisL": {
+				"length": 0.0955,
+				"init_dir": [0, -1, 0],
+				"points": ["jTorso", "jLHip"],
+				"parent": "root"
+			},
+			"Trunk": {
+				"init_dir": [0, 0, 1],
+				"length": 0.288,
+				"points": ["jTorso", "jNeck"],
+				"parent": "root"
+			},
+	 		"Head":{
+			 	"init_dir": [0, 0, 1],
+			 	"length": 0.182,
+			 	"points": ["jNeck", "pTopOfHead"],
+			 	"parent": "Trunk"
+			},
+			"UpperLegL": {
+				"init_dir": [0, 0, -1],
+				"length": 0.245,
+				"points": ["jLHip", "jLKnee"],
+				"parent": "PelvisL"
+			},
+			"UpperLegR": {
+				"init_dir": [0, 0, -1],
+				"length": 0.245,
+				"points": ["jRHip", "jRKnee"],
+				"parent": "PelvisR"
+			},
+			"LowerLegL": {
+				"init_dir": [0, 0, -1],
+				"length": 0.245,
+				"points": ["jLKnee", "jLAnkle"],
+				"parent": "UpperLegL"
+			},
+			"LowerLegR": {
+				"init_dir": [0, 0, -1],
+				"length": 0.245,
+				"points": ["jRKnee", "jRAnkle"],
+				"parent": "UpperLegR"
+			},
+			"ShoulderL": {
+				"init_dir": [0, -1, 0],
+				"length": 0.1295,
+				"points": ["jNeck", "jLShoulder"],
+				"parent": "Trunk"
+			},
+			"ShoulderR": {
+				"init_dir": [0, 1, 0],
+				"length": 0.1295,
+				"points": ["jNeck", "jRShoulder"],
+				"parent": "Trunk"
+			},
+			"UpperArmL": {
+				"init_dir": [0, 0, -1],
+				"length": 0.188,
+				"points": ["jLShoulder", "jLElbow"],
+				"parent": "ShoulderL"
+			},
+			"UpperArmR": {
+				"init_dir": [0, 0, -1],
+				"length": 0.188,
+				"points": ["jRShoulder", "jRElbow"],
+				"parent": "ShoulderR"
+			},
+			"ForeArmR": {
+				"init_dir": [0, 0, -1],
+				"length": 0.145,
+				"points": ["jRElbow", "jRWrist"],
+				"parent": "UpperArmR"
+			},
+			"ForeArmL": {
+				"init_dir": [0, 0, -1],
+				"length": 0.145,
+				"points": ["jLElbow", "jLWrist"],
+				"parent": "UpperArmL"
+			}
+		},
+		"list_points":{
+			"jTorso": {
+				"position": [0.0, 0.0, 0.0]
+			},
+			"jRHip": {
+				"position": [0.0, 0.0, 0.0]
+			},
+			"jLHip": {
+				"position": [0.0, 0.0, 0.0]
+			},
+			"jNeck": {
+				"position": [0.0, 0.0, 0.0]
+			},
+			"jLKnee": {
+				"position": [0.0, 0.0, 0.0]
+			},
+			"jRKnee": {
+				"position": [0.0, 0.0, 0.0]
+			},
+			"jRAnkle": {
+				"position": [0.0, 0.0, 0.0]
+			},
+			"jLAnkle": {
+				"position": [0.0, 0.0, 0.0]
+			},
+			"pTopOfHead": {
+				"position": [0.0, 0.0, 0.0]
+			},
+			"jRShoulder": {
+				"position": [0.0, 0.0, 0.0]
+			},
+			"jLShoulder": {
+				"position": [0.0, 0.0, 0.0]
+			},
+			"jRElbow": {
+				"position": [0.0, 0.0, 0.0]
+			},
+			"jLElbow": {
+				"position": [0.0, 0.0, 0.0]
+			},
+			"jRWrist": {
+				"position": [0.0, 0.0, 0.0]
+			},
+			"jLWrist": {
+				"position": [0.0, 0.0, 0.0]
+			}
+
+		}
 	}
-
-
-
 }
