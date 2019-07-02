@@ -41,7 +41,7 @@ class HumanPosture():
 				self.reduced_dof += 1
 
 	def update_posture(self, input_joints):
-		self.joints_whole_body = input_joints
+		self.joints_whole_body = np.deg2rad(input_joints)
 		self.joint_reduce_body = np.zeros(self.reduced_dof)
 		self.mapping_posture()
 
@@ -65,22 +65,6 @@ class HumanPosture():
 				count += 1
 
 		self.mapping_posture()
-
-	def update_posture_tensor(self, input_joints):
-		self.joints_whole_body = input_joints
-		self.joint_reduce_body = torch.zeros([self.reduced_dof])
-		self.mapping_posture_tensor()
-
-	def mapping_posture_tensor(self):
-		num_dof = 0
-		self.joint_reduce_body = torch.zeros([self.reduced_dof])
-		for joint, num_joint in zip(self.list_all_joints, range(self.reduced_dof)):
-			name_joint, dim_joint = joint.split('_')
-
-			for i_joint in self.mapping_joints[name_joint]['input_joints']:
-			 	id_joint = self.get_id_input_joint(i_joint)
-			 	dim = self.dimensions[dim_joint]
-			 	self.joint_reduce_body[num_joint] += self.joints_whole_body[id_joint*3+dim]*(2*math.pi)/360
 
 	def get_id_input_joint(self, name_joint):
 		id_joint = self.input_joints.index(name_joint)
