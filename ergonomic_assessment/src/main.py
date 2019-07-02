@@ -1,71 +1,67 @@
-from ErgoScore import ErgoScore
+from ErgoAssessment import ErgoAssessment
+from HumanPosture import HumanPosture
+from Skeleton import Skeleton
 from xsens_parser import mvnx_tree
+import AE
+from sklearn import preprocessing
 
 import matplotlib.pyplot as plt
 import numpy as np
+import json
+import pickle
+import pandas as pd
+import torch
+import torch.nn as nn
+import tools
+import random
+
+import os
+import argparse
+import configparser
 
 import visualization_tools as vtools
 from copy import deepcopy
 
+from matplotlib.pyplot import cm
+import matplotlib.patches as mpatches
+
+import torchvision.transforms.functional as TF
+
 if __name__ == '__main__':
-	path = '/home/amalaise/Documents/These/code/AE_ProMPS/data/7x10_actions/XSens/xml/'
-	mvnx_tree = mvnx_tree(path + 'standing-001.mvnx')
 
-	position_data = mvnx_tree.get_data('position')
-	joint_data = mvnx_tree.get_data('jointAngle')
-	orientation = mvnx_tree.get_data('orientation')
+	# Get arguments
+	parser=argparse.ArgumentParser()
+	autoencoder = AE.ModelAutoencoder(parser)
 
-	o_npose, p_npose = mvnx_tree.get_npose()
+	list_metric = ['ergo_score']
 
-	# for t in range(len(position_data)):
-		# abs_data = deepcopy(position_data[t])
-		# o_data = orientation[t]
+	size_list = [1, 2, 5, 10, 20, 30, 45, 66]
+	# size_list = [66]
+	loss = [[]]
 
-		# i = 0
-		# q0 = o_data[i*4]
-		# q1 = o_data[i*4 + 1]
-		# q2 = o_data[i*4 + 2]
-		# q3 = o_data[i*4 + 3]
+	for metric in list_metric:
+		for i, size in enumerate(size_list):
+			autoencoder.change_config('hidden_dim', size)
+			loss[i] = autoencoder.train_model(list_metric=list_metric)
+			loss.append([])
+			path = "save/" + metric + "/"
+			if not os.path.exists(path):
+				os.mkdir(path)
+			pickle.dump(autoencoder, open(path + "autoencoder_" + str(size) + ".pkl", "wb" ) )
+			pickle.dump(loss[i], open(path + "loss_" + str(size) + ".pkl", "wb" ) )
 
-		# R = np.array([[q0*q0 + q1*q1 - q2*q2 - q3*q3, 2*q1*q2 - 2*q0*q3, 2*q1*q3 + 2*q0*q2],
-		# 	[2*q1*q2 + 2*q0*q3, q0*q0 - q1*q1 + q2*q2 - q3*q3, 2*q2*q3 - 2*q0*q1],
-		# 	[2*q1*q3 - 2*q0*q2, 2*q2*q3 + 2*q0*q1, q0*q0 - q1*q1 - q2*q2 + q3*q3]])
+		del loss[-1]
 
+	skeleton = Skeleton('dhm66_ISB_Xsens.urdf')
+	data = autoencoder.get_data_test()
 
-		# for i in range(0, 23):
-		# 	# position_data[t, i*3:i*3+3] = abs_data[i*3:i*3+3] - abs_data[0:3]
-		# 	# print(np.shape(position_data[t,i*3:i*3+3]))
-		# 	position_data[t, i*3:i*3+3] = position_data[t, i*3:i*3+3] - abs_data[0:3]
-		# 	position_data[t, i*3:i*3+3] = R@position_data[t,i*3:i*3+3]
+	for metric in list_metric:
 
+		fig1 = plt.figure()
+		lines = []
+		for i, size in enumerate(size_list):
+			line, = plt.plot(loss[i][metric], label = str(size))
+		plt.legend()
 
-	ergo_score = ErgoScore()
-
-	trunk_bend = []
-
-	fig = plt.figure()
-	ax = fig.add_subplot(111, projection='3d')
-
-	count = 0
-
-	for i in range(len(position_data)):
-		ergo_score.update_posture(position_data[i])
-		trunk_bend.append(ergo_score.compute_score_neck())
-
-	
-
-
-	pose = position_data[0]
-
-	vtools.draw_pos(ax, pose)
-
-	plt.figure()
-	plt.plot(trunk_bend)
-
-	# id_joint = mvnx_tree.get_id_joint()
-	# plt.plot(joint_data[:,0:3])
+	# posture.animate_skeleton([seq_data_test[0][0::40], decoded_joint[0::40]], color=color, save=True)
 	plt.show()
-
-
-
-
