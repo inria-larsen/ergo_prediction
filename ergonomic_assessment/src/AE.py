@@ -250,14 +250,16 @@ class ModelAutoencoder():
 
 					loss_score[metric].append(np.sqrt(np.square(input_position - output_position).mean()))
 
+				
+
+				list_loss.append(loss_score[metric][epoch]) 
 				if epoch%100 == 0:
 					print('Epoch: ', epoch, '| train loss: %.4f' % loss.data.numpy())
 
-				list_loss.append(loss_score[metric][epoch]) 
 				if len(list_loss) > 500:
 					del list_loss[0]
-					if np.std(list_loss) < 0.005:
-						break
+					if np.std(list_loss) < 0.01:
+						return loss_score
 
 		return loss_score
 
