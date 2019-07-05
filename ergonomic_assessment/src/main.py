@@ -29,15 +29,14 @@ import torchvision.transforms.functional as TF
 import multiprocessing as mp
 
 if __name__ == '__main__':
-	print("Number of processors: ", mp.cpu_count())
+	local_path = os.path.dirname(os.path.abspath(__file__))
 	# Get arguments
 	parser=argparse.ArgumentParser()
 	autoencoder = AE.ModelAutoencoder(parser)
 
 	list_metric = ['jointAngle']
 
-	# size_list = [1, 2, 5, 10, 20, 30, 45, 66]
-	size_list = [5]
+	size_list = [1, 2, 5, 10, 20, 30, 45, 66]
 	loss = [[]]
 
 	for metric in list_metric:
@@ -45,7 +44,7 @@ if __name__ == '__main__':
 			autoencoder.change_config('hidden_dim', size)
 			loss[i] = autoencoder.train_model(list_metric=list_metric)
 			loss.append([])
-			path = "save/" + metric + "/"
+			path = local_path + "/save/" + metric + "/"
 			if not os.path.exists(path):
 				os.mkdir(path)
 			pickle.dump(autoencoder, open(path + "autoencoder_" + str(size) + ".pkl", "wb" ) )
