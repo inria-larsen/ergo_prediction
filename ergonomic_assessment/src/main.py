@@ -26,17 +26,18 @@ from matplotlib.pyplot import cm
 import matplotlib.patches as mpatches
 
 import torchvision.transforms.functional as TF
+import multiprocessing as mp
 
 if __name__ == '__main__':
-
+	print("Number of processors: ", mp.cpu_count())
 	# Get arguments
 	parser=argparse.ArgumentParser()
 	autoencoder = AE.ModelAutoencoder(parser)
 
-	list_metric = ['ergo_score']
+	list_metric = ['jointAngle']
 
-	size_list = [1, 2, 5, 10, 20, 30, 45, 66]
-	# size_list = [66]
+	# size_list = [1, 2, 5, 10, 20, 30, 45, 66]
+	size_list = [5]
 	loss = [[]]
 
 	for metric in list_metric:
@@ -52,8 +53,8 @@ if __name__ == '__main__':
 
 		del loss[-1]
 
-	skeleton = Skeleton('dhm66_ISB_Xsens.urdf')
-	data = autoencoder.get_data_test()
+	# skeleton = Skeleton('dhm66_ISB_Xsens.urdf')
+	# data = autoencoder.get_data_test()
 
 	for metric in list_metric:
 
@@ -63,5 +64,5 @@ if __name__ == '__main__':
 			line, = plt.plot(loss[i][metric], label = str(size))
 		plt.legend()
 
-	# posture.animate_skeleton([seq_data_test[0][0::40], decoded_joint[0::40]], color=color, save=True)
+	# skeleton.animate_skeleton([seq_data_test[0][0::40], decoded_joint[0::40]], color=color, save=True)
 	plt.show()

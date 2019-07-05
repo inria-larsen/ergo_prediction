@@ -6,6 +6,8 @@ import tools
 from urdf_parser_py.urdf import URDF
 from matplotlib import animation
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+import time
 
 
 # Define segments (between origins of two consecutive links)
@@ -15,12 +17,11 @@ Xsens_segments = [['Pelvis', 'L5'], ['L5', 'L3'], ['L3', 'T12'], ['T12', 'T8'], 
 		['Pelvis', 'Right Upper Leg'], ['Right Upper Leg', 'Right Lower Leg'], ['Right Lower Leg', 'Right Foot'], ['Right Foot', 'Right Toe'],
 		['Pelvis', 'Left Upper Leg'], ['Left Upper Leg', 'Left Lower Leg'], ['Left Lower Leg', 'Left Foot'], ['Left Foot', 'Left Toe']]
 
-Xsens_bodies = [ 	'Pelvis', 'L5', 'L3', 'T12', 'T8', 'Neck', 'Head',  
+Xsens_bodies = ['Pelvis', 'L5', 'L3', 'T12', 'T8', 'Neck', 'Head',  
 			'Right Shoulder', 'Right Upper Arm', 'Right Forearm', 'Right Hand',  
 			'Left Shoulder', 'Left Upper Arm', 'Left Forearm', 'Left Hand',   	
 			'Right Upper Leg', 'Right Lower Leg', 'Right Foot', 'Right Toe',
-			'Left Upper Leg', 'Left Lower Leg', 'Left Foot', 'Left Toe'
-			]
+			'Left Upper Leg', 'Left Lower Leg', 'Left Foot', 'Left Toe']
 
 # Xsens to URDF joint mapping
 joint_mapping = {
@@ -102,19 +103,22 @@ class Skeleton():
 	This class is used to map the human skeleton of 66 Degrees of freedom from Xsens into 
 	a urdf model.
 	"""
-
 	def __init__(self, urdf_file):
 		self.urdf_model = URDF.from_xml_file(urdf_file)
 		self.joint_angle = np.zeros(len(joint_mapping))
 		self.position = np.zeros(len(Xsens_bodies)*3)
 
-	def update_posture(self, input_joints, flag_pos = False):
+	def update_posture(self, input_joints, flag_pos = True, num_frame=0):
 		self.joint_angle = input_joints
 		if flag_pos:
 			self.joint2pos()
 		return self.position
 
 	def get_position(self):
+		return self.position
+
+	def update_position_data(self, position_data):
+		self.position = position_data
 		return self.position
 
 	def get_position_segment(self, name_segment):
@@ -125,20 +129,6 @@ class Skeleton():
 		"""
 		Compute position data from joint angle data
 		"""
-		if len(q) == 0:
-			for j in self.urdf_model.joints:
-				if j.type != 'fixed':
-					q[j.name] = joint_mapping[j.name][1] * self.joint_angle[joint_mapping[j.name][0]]*np.pi/180
-			position_root = [0,0,0]
-			quaternion_root = [1, 0, 0, 0]
-			q['root_X'] = position_root[0]
-			q['root_Y'] = position_root[1]
-			q['root_Z'] = position_root[2]
-			q['root_qw'] = quaternion_root[0]
-			q['root_qx'] = quaternion_root[1]
-			q['root_qy'] = quaternion_root[2]
-			q['root_qz'] = quaternion_root[3]
-
 		root = self.urdf_model.get_root()
 		bodies = self.urdf_model.get_chain(root, linkname)		
 		H = np.matrix([[1., 0., 0., 0.], [0., 1., 0., 0.], [0., 0., 1., 0.], [0., 0., 0., 1.]])
@@ -183,7 +173,8 @@ class Skeleton():
 					[R[2,0], R[2,1], R[2,2], q['root_Z']], 
 					[0., 0., 0., 1.]])
 		H = H_root * H
-		return np.asarray(H)
+
+		return np.asarray(H)[0:3,3]
 
 	def joint2pos(self):
 		"""
@@ -194,9 +185,10 @@ class Skeleton():
 		quaternion_root = [1, 0, 0, 0]
 
 		q = dict()
+
 		for j in self.urdf_model.joints:
 			if j.type != 'fixed':
-				q[j.name] = joint_mapping[j.name][1] * self.joint_angle[joint_mapping[j.name][0]]*np.pi/180
+				q[j.name] = joint_mapping[j.name][1] * self.joint_angle[joint_mapping[j.name][0]]
 
 		q['root_X'] = position_root[0]
 		q['root_Y'] = position_root[1]
@@ -206,27 +198,23 @@ class Skeleton():
 		q['root_qy'] = quaternion_root[2]
 		q['root_qz'] = quaternion_root[3]
 
-		for num_seg, seg in enumerate(Xsens_segments):
-			Hini = self.get_segment_position(seg[0], q)
+		for seg in Xsens_segments:
 			id_ini = Xsens_bodies.index(seg[0])
-			self.position[id_ini*3:id_ini*3+3] = Hini[0:3,3]
-			# self.position[id_ini*3] = Hini[0,3]
-			# self.position[id_ini*3+1] = Hini[1,3]
-			# self.position[id_ini*3+2] = Hini[2,3]
+			self.position[id_ini*3:id_ini*3+3] = self.get_segment_position(seg[0], q)
 
-			Hend = self.get_segment_position(seg[1], q)
 			id_end = Xsens_bodies.index(seg[1])
-			self.position[id_end*3:id_end*3+3] = Hend[0:3,3]
-			# self.position[id_end*3] = Hend[0,3]
-			# self.position[id_end*3+1] = Hend[1,3]
-			# self.position[id_end*3+2] = Hend[2,3]
+			self.position[id_end*3:id_end*3+3] = self.get_segment_position(seg[1], q)
 
-	def visualise_from_joints(self, data = [], color='b'):
+
+	def visualise_from_joints(self, data = [], color='b', position_data = False):
 		"""
 		Plot the skeleton based on joint angle data
 		"""
 		if len(data) > 0:
-			self.update_posture(data)
+			if position_data:
+				self.position = data
+			else:
+				self.update_posture(data, flag_pos = True)
 
 		ax = plt.gca()
 
@@ -254,22 +242,38 @@ class Skeleton():
 
 		return lines
 
-	def animate_skeleton(self, joint_seq_list, color=['b'], save=False):
+	def animate_skeleton(self, joint_seq_list, color=['b'], save=False, position_flag=False):
 		"""
 		Take a sequence of joint angle data to animate the skeleton.
 		"""
-
 		fig = plt.gcf()
 		ax = plt.gca()
+
+		position_data = [[]]
+
+		# for num_seq, sequence in enumerate(joint_seq_list):
+		# 	for i in range(len(sequence)):
+		# 		if position_flag == False: 
+		# 			position_data[num_seq].append(self.update_posture(sequence[i], flag_pos = True))
+		# 		else:
+		# 			position_data[num_seq].append(self.update_position_data(sequence[i]))
+
+		# 	if num_seq < len(joint_seq_list)-1:
+		# 		position_data.append([])
+
+		# if position_flag:
 
 		lines = []
 
 		for num_seq, sequence in enumerate(joint_seq_list):
-			lines.append(self.visualise_from_joints(sequence[0], color=color[num_seq]))
+			lines.append(self.visualise_from_joints(sequence[0], color=color[num_seq], position_data = position_flag))
 
 		def animate(i):
 			for num_seq, sequence in enumerate(joint_seq_list):
-				self.update_posture(sequence[i])
+				if position_flag == False: 
+					self.update_posture(sequence[i], flag_pos = True)
+				else:
+					self.position = sequence[i]
 
 				for num_seg, seg in enumerate(Xsens_segments):
 					id_ini = Xsens_bodies.index(seg[0])
@@ -279,10 +283,14 @@ class Skeleton():
 						[self.position[id_ini*3+1],self.position[id_end*3+1]])
 					lines[num_seq][num_seg].set_3d_properties([self.position[id_ini*3+2],self.position[id_end*3+2]])
 
-		anim=animation.FuncAnimation(fig,animate,repeat=False,blit=False,frames=len(joint_seq_list[0]), interval=20)
+		anim=animation.FuncAnimation(fig,animate,repeat=False,blit=False,frames=len(joint_seq_list[0]), interval=10)
 
 		if save:
 			anim.save('skeleton_reconstruct.mp4',writer=animation.FFMpegWriter(fps=24))
+
+		red_patch = mpatches.Patch(color='r', label='Reconstruct')
+		blue_patch = mpatches.Patch(color='b', label='Input')
+		plt.legend(handles=[red_patch, blue_patch])
 
 		plt.show()
 		return fig

@@ -14,6 +14,12 @@ from HumanPosture import HumanPosture
 from ErgoAssessment import ErgoAssessment
 
 import matplotlib.pyplot as plt 
+from mpl_toolkits import mplot3d
+import visualization_tools as vtools
+
+import multiprocessing as mp
+
+
 
 
 # def compute_loss_function(input_data, output_data):
@@ -107,6 +113,7 @@ class ModelAutoencoder():
 		self.N_TEST_IMG = 5
 		self.tracks = ['details']
 		self.ratio_split = self.config["ratio_split_sets"]
+		self.input_type = self.config["input_type"]
 		
 	def config_model(self):
 		self.nbr_epoch = int(self.config["epoch"])
@@ -127,7 +134,7 @@ class ModelAutoencoder():
 		self.config_model()
 
 	def load_data(self, path):
-		self.list_features, self.data_np, self.real_labels, self.timestamps, list_states = tools.load_data(path, self.tracks, 'jointAngle_')
+		self.list_features, self.data_np, self.real_labels, self.timestamps, list_states = tools.load_data(path, self.tracks, self.input_type + '_')
 		self.list_states = list_states[0]
 
 		self.seq_data_train, seq_labels_train, self.seq_data_test, seq_labels_test, seq_id_train, seq_id_test = tools.split_data_base(self.data_np, self.real_labels[0], self.ratio_split)
@@ -144,7 +151,6 @@ class ModelAutoencoder():
 				self.data_test.append(d_joint)
 
 		x_joint = np.asarray(self.data_train)
-		x_joint = np.deg2rad(x_joint)
 
 		x_norm = np.copy(x_joint)
 		x_joint = x_joint.astype(np.float32)
@@ -169,18 +175,32 @@ class ModelAutoencoder():
 		b_y = self.train_loader.view(-1, self.input_dim)
 
 		input_data = np.copy(b_x.detach().numpy())
+
 		for i in range(self.input_dim):
 			input_data[:,i] = np.rad2deg(input_data[:,i]*self.var_norm[i] + self.mean_norm[i])
 
+		# if self.input_type == 'jointAngle':
+		# 	input_data = np.rad2deg(input_data[:,i])
+
 		if 'position' in list_metric:
-			input_position = np.zeros((len(input_data), 12))
+			# input_position = np.zeros((len(input_data), 12))
 			output_position = np.zeros((len(input_data), 12))
 			end_effectors = ['Right Hand', 'Left Hand', 'Right Foot', 'Left Foot']
 
-			for i in range(len(input_data)):
-				skeleton.update_posture(input_data[i])
-				for num_link, linkname in enumerate(end_effectors):
-					input_position[i,num_link*3:num_link*3+3] = skeleton.get_segment_position(linkname)[0:3,3]
+			pool = mp.Pool(mp.cpu_count())
+			# position = [pool.apply(skeleton.update_posture, args=(data, True)) for data in input_data]
+			# position = pool.starmap(skeleton.update_posture, [(data, True) for data in input_data])
+
+			result_objects = [pool.apply_async(skeleton.update_posture, args=(data, True, i)) for i, data in enumerate(input_data)]
+			input_position = [r.get() for r in result_objects]
+
+			pool.close()
+			pool.join()
+
+			# for i in range(len(input_data)):
+			# 	skeleton.update_posture(input_data[i])
+				# for num_link, linkname in enumerate(end_effectors):
+				# 	input_position[i,num_link*3:num_link*3+3] = skeleton.get_segment_position(linkname)[0:3,3]
 
 		if 'ergo_score' in list_metric:
 			score_total = 'RULA_SCORE'
@@ -228,14 +248,13 @@ class ModelAutoencoder():
 
 					loss_score[metric].append(np.sqrt(np.square(input_position - output_position).mean()))
 
-			print('Epoch: ', epoch, '| train loss: %.4f' % loss.data.numpy())
+			if epoch%100 == 0:
+				print('Epoch: ', epoch, '| train loss: %.4f' % loss.data.numpy())
 
 		return loss_score
 
-
-	def test_model(self):
-		x_joint = np.asarray(self.seq_data_test[0])
-		x_joint = np.deg2rad(x_joint)
+	def test_model(self, data):
+		x_joint = np.asarray(data)
 
 		x = x_joint
 		x_norm = x_joint
@@ -250,18 +269,10 @@ class ModelAutoencoder():
 
 		encoded, decoded = self.autoencoder(b_x)
 
-		# fig = plt.figure()
-		# posture = Skeleton('dhm66_ISB_Xsens.urdf')
-		# ax = fig.add_subplot(111, projection='3d')
-
-		color = ['b', 'r']
-
 		decoded_joint = decoded.detach().numpy()
 
 		for i in range(self.input_dim):
 			decoded_joint[:,i] = decoded_joint[:,i]*self.var_norm[i] + self.mean_norm[i]
-
-		decoded_joint = np.rad2deg(decoded_joint)
 
 		return decoded_joint
 
