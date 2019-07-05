@@ -215,6 +215,8 @@ class ModelAutoencoder():
 				ergo_assessment.compute_ergo_scores(human_posture)
 				input_ergo[i] = ergo_assessment[score_total]
 
+
+		list_loss = []
 		for epoch in range(self.nbr_epoch):
 
 			encoded, decoded = self.autoencoder(b_x)
@@ -248,8 +250,14 @@ class ModelAutoencoder():
 
 					loss_score[metric].append(np.sqrt(np.square(input_position - output_position).mean()))
 
-			if epoch%100 == 0:
-				print('Epoch: ', epoch, '| train loss: %.4f' % loss.data.numpy())
+				if epoch%100 == 0:
+					print('Epoch: ', epoch, '| train loss: %.4f' % loss.data.numpy())
+
+				list_loss.append(loss_score[metric][epoch]) 
+				if len(list_loss) > 500:
+					del list_loss[0]
+					if np.std(list_loss) < 0.005:
+						break
 
 		return loss_score
 
