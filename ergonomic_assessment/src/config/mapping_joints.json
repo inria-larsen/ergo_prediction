@@ -62,8 +62,8 @@
 			"input_joints": ["jRightElbow"],
 			"mapping":{
 				"pitch": 1,
-				"roll": 1,
-				"yaw": 1
+				"roll": 0,
+				"yaw": 0
 			}
 		},
 
@@ -88,8 +88,8 @@
 			"input_joints": ["jRightKnee"],
 			"mapping":{
 				"pitch": 1,
-				"roll": 1,
-				"yaw": 1
+				"roll": 0,
+				"yaw": 0
 			}
 		},
 
@@ -106,8 +106,8 @@
 			"input_joints": ["jLeftElbow"],
 			"mapping":{
 				"pitch": 1,
-				"roll": 1,
-				"yaw": 1
+				"roll": 0,
+				"yaw": 0
 			}
 		},
 		"jLWrist": {
@@ -131,8 +131,8 @@
 			"input_joints": ["jLeftKnee"],
 			"mapping":{
 				"pitch": 1,
-				"roll": 1,
-				"yaw": 1
+				"roll": 0,
+				"yaw": 0
 			}
 		}
 	},

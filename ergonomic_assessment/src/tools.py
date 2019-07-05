@@ -7,6 +7,7 @@ import seaborn as sns
 import random 
 import pickle
 from sklearn.model_selection import train_test_split
+from matplotlib import animation
 
 list_joints = ['jL5S1',
 			'jL4L3',
@@ -58,7 +59,7 @@ def sync_labels(timestamps, labels):
 def load_data(path, tracks, name_feature):
 	print('Loading data...')
 
-	all_tracks = ['general_posture', 'detailed_posture', 'details', 'current_action']
+	all_tracks = ['current_action']
 
 	timestamps = []
 
@@ -69,42 +70,76 @@ def load_data(path, tracks, name_feature):
 
 	data_win2 = []
 
-	with open(path + 'save_data_dump_joint.pkl', 'rb') as input:
+	with open(path + 'save_data_dump.pkl', 'rb') as input:
 		data_win2 = pickle.load(input)
 	with open(path + 'save_labels_dump.pkl', 'rb') as input:
 		real_labels = pickle.load(input)
 	with open(path + 'save_liststates_dump.pkl', 'rb') as input:
 		list_states = pickle.load(input)
-	with open(path + 'save_listfeatures_joint_dump.pkl', 'rb') as input:
+	with open(path + 'save_listfeatures_dump.pkl', 'rb') as input:
 		list_features = pickle.load(input)
 
 	list_reduce_features = []
 
 	if(name_feature == 'jointAngle_'):
 		for joint in list_joints:
-			list_reduce_features.append(name_feature + joint + '_' + 'x')
-			list_reduce_features.append(name_feature + joint + '_' + 'y')
-			list_reduce_features.append(name_feature + joint + '_' + 'z')
+			list_reduce_features.append(name_feature + joint.lower() + '_' + 'x')
+			list_reduce_features.append(name_feature + joint.lower() + '_' + 'y')
+			list_reduce_features.append(name_feature + joint.lower() + '_' + 'z')
 	else:
+		orientation_feature = []
 		for segment in list_segments:
-			list_reduce_features.append(name_feature + segment + '_' + 'x')
-			list_reduce_features.append(name_feature + segment + '_' + 'y')
-			list_reduce_features.append(name_feature + segment + '_' + 'z')
+			list_reduce_features.append(name_feature + segment.lower() + '_' + 'x')
+			list_reduce_features.append(name_feature + segment.lower() + '_' + 'y')
+			list_reduce_features.append(name_feature + segment.lower() + '_' + 'z')
 
-	id_track_rm = 0
-	for num_track in range(len(all_tracks)):
-		if(not(all_tracks[num_track] in tracks)):
-			del real_labels[num_track - id_track_rm]
-			del list_states[num_track - id_track_rm]
-			id_track_rm += 1
+			orientation_feature.append('orientation_' + segment.lower() + '_' + 'q0')
+			orientation_feature.append('orientation_' + segment.lower() + '_' + 'q1')
+			orientation_feature.append('orientation_' + segment.lower() + '_' + 'q2')
+			orientation_feature.append('orientation_' + segment.lower() + '_' + 'q3')
+
+
+
+	# id_track_rm = 0
+	# for num_track in range(len(all_tracks)):
+	# 	if(not(all_tracks[num_track] in tracks)):
+	# 		del real_labels[num_track - id_track_rm]
+	# 		del list_states[num_track - id_track_rm]
+	# 		id_track_rm += 1
+
+
 
 	for data, num_data in zip(data_win2, range(len(data_win2))):
-		df_all_data.append(pd.DataFrame(data, columns = list_features))
-		df_all_data[-1] = df_all_data[-1][list_reduce_features]
-		data_win2[num_data] = df_all_data[-1][list_reduce_features].values
+		df_all_data = pd.DataFrame(data, columns = list_features)
+		df_reduce_data = df_all_data[list_reduce_features]
+		data_win2[num_data] = df_reduce_data[list_reduce_features].values
+
+		if name_feature == 'jointAngle_':
+			data_win2[num_data] = np.deg2rad(data_win2[num_data])
+
+		# if name_feature == 'position_':
+		# 	orientation = df_all_data[orientation_feature].values
+
+		# 	for t in range(len(data_win2[num_data])):
+		# 		abs_data = np.copy(data[t])
+		# 		o_data = orientation[t]
+
+		# 		i = 0
+		# 		q0 = o_data[i*4]
+		# 		q1 = o_data[i*4 + 1]
+		# 		q2 = o_data[i*4 + 2]
+		# 		q3 = o_data[i*4 + 3]
+
+		# 		R = np.array([[q0*q0 + q1*q1 - q2*q2 - q3*q3, 2*q1*q2 - 2*q0*q3, 2*q1*q3 + 2*q0*q2],
+		# 			[2*q1*q2 + 2*q0*q3, q0*q0 - q1*q1 + q2*q2 - q3*q3, 2*q2*q3 - 2*q0*q1],
+		# 			[2*q1*q3 - 2*q0*q2, 2*q2*q3 + 2*q0*q1, q0*q0 - q1*q1 - q2*q2 + q3*q3]])
+
+		# 		for i in range(0, 23):
+		# 			# data_win2[num_data][t, i*3:i*3+3] = abs_data[i*3:i*3+3] - abs_data[0:3]
+		# 			data_win2[num_data][t, i*3:i*3+3] = R@data[t,i*3:i*3+3]
+
 		timestamps.append(data[:,0])
 		real_labels[0][num_data] = sync_labels(timestamps[num_data], real_labels[0][num_data])
-
 
 	list_features = list_reduce_features
 
@@ -216,6 +251,41 @@ def compute_rotation(theta, length):
 	Hjoint = np.matrix([[R[0,0], R[0,1], R[0,2], length[0]], [R[1,0], R[1,1], R[1,2], length[1]], [R[2,0], R[2,1], R[2,2], length[2]], [0, 0, 0, 1]])
 
 	return Hjoint
+
+def animate_skeleton():
+	fig = plt.figure()
+	ax = plt.axes(xlim=(0, 2), ylim=(-2, 2))
+	line, = ax.plot([], [], lw=2)
+
+	# initialization function: plot the background of each frame
+	def init():
+		line.set_data([], [])
+		return line,
+
+	# animation function.  This is called sequentially
+	def animate(i):
+		print(i)
+		x = np.linspace(0, 2, 1000)
+		y = np.sin(2 * np.pi * (x - 0.01 * i))
+		line.set_data(x, y)
+		return line,
+
+	# call the animator.  blit=True means only re-draw the parts that have changed.
+	anim = animation.FuncAnimation(fig, animate, init_func=init,
+								   frames=100, interval=20, blit=True)
+
+	# save the animation as an mp4.  This requires ffmpeg or mencoder to be
+	# installed.  The extra_args ensure that the x264 codec is used, so that
+	# the video can be embedded in html5.  You may need to adjust this for
+	# your system: for more information, see
+	# http://matplotlib.sourceforge.net/api/animation_api.html
+	# anim.save('basic_animation.mp4', fps=30, extra_args=['-vcodec', 'libx264'])
+
+	# plt.show()
+	return
+
+def plot_loss_function(metric):
+	return
 
 
 

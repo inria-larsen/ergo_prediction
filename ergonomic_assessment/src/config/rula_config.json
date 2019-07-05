@@ -15,9 +15,9 @@
 			"related_score": "none",
 			"related_joint": ["jTorso_pitch", "jTorso_roll", "jTorso_yaw"],
 			"threshold":[
-				[[-5, 10], [10, 20], [20, 60], [60, 90]],
-				[[-10, 10], [-90, -10], [10, 90]],
-				[[-10, 10], [-90, -10], [10, 90]]
+				[[-10, 10], [10, 20], [20, 60], [60, 90]],
+				[[-30, 30], [-90, -30], [30, 90]],
+				[[-30, 30], [-90, -30], [30, 90]]
 			],
 			"related_value": [
 				[1, 2, 3, 4],
@@ -54,7 +54,7 @@
 			"type_score": "jointAngle",
 			"related_score": "none",
 			"related_joint": ["jRElbow_pitch"],
-			"threshold":[[[60,100], [100, 180], [-10, 60]]],
+			"threshold":[[[60,100], [100, 180], [-25, 60]]],
 			"related_value": [[1, 2, 2]]
 		},
 
@@ -62,7 +62,7 @@
 			"type_score": "jointAngle",
 			"related_score": "none",
 			"related_joint": ["jLElbow_pitch"],
-			"threshold":[[[60,100], [100, 180], [-10, 60]]],
+			"threshold":[[[60,100], [100, 180], [-25, 60]]],
 			"related_value": [[1, 2, 2]]
 		},
 
@@ -245,7 +245,7 @@
 			]
 		},
 	
-		"TABLE_RULA_C": {
+		"RULA_SCORE": {
 			"type_score": "table",
 			"related_score":[
 				"TABLE_RULA_B",
