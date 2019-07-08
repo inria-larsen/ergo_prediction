@@ -32,9 +32,9 @@ if __name__ == '__main__':
 	local_path = os.path.dirname(os.path.abspath(__file__))
 	# Get arguments
 	parser=argparse.ArgumentParser()
-	autoencoder = AE.ModelAutoencoder(parser)
+	autoencoder = AE.ModelAutoencoder(parser, local_path)
 
-	list_metric = ['jointAngle']
+	list_metric = autoencoder.get_list_metric()
 
 	size_list = [1, 2, 5, 10, 20, 30, 45, 66]
 	loss = [[]]
@@ -52,16 +52,12 @@ if __name__ == '__main__':
 
 		del loss[-1]
 
-	# skeleton = Skeleton('dhm66_ISB_Xsens.urdf')
-	# data = autoencoder.get_data_test()
+	# for metric in list_metric:
 
-	for metric in list_metric:
+	# 	fig1 = plt.figure()
+	# 	lines = []
+	# 	for i, size in enumerate(size_list):
+	# 		line, = plt.plot(loss[i][metric], label = str(size))
+	# 	plt.legend()
 
-		fig1 = plt.figure()
-		lines = []
-		for i, size in enumerate(size_list):
-			line, = plt.plot(loss[i][metric], label = str(size))
-		plt.legend()
-
-	# skeleton.animate_skeleton([seq_data_test[0][0::40], decoded_joint[0::40]], color=color, save=True)
-	plt.show()
+	# plt.show()

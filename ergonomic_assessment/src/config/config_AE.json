@@ -1,12 +1,13 @@
 {
-	"path_data": "/home/amalaise/Documents/These/experiments/ANDY_DATASET/AndyData-lab-onePerson/dump/win_size250/",
+	"path_data": "/database/win_size250/",
 	"DEFAULT":{
 		"latent_dim":   10,
 		"hidden_dim": 10,
 		"epoch":  5000,
 		"ratio_split_sets": [70, 30, 0],
 		"type_AE": "AE",
-		"input_type": "jointAngle"
+		"input_type": "jointAngle",
+		"list_metric": ["jointAngle"]
 	},
 
 	"position_input":{
@@ -15,6 +16,17 @@
 		"epoch":  5000,
 		"ratio_split_sets": [70, 30, 0],
 		"type_AE": "AE",
-		"input_type": "position"
+		"input_type": "position",
+		"list_metric": ["pose"]
+	},
+
+	"position_evaluation":{
+		"latent_dim":   10,
+		"hidden_dim": 10,
+		"epoch":  5000,
+		"ratio_split_sets": [70, 30, 0],
+		"type_AE": "AE",
+		"input_type": "jointAngle",
+		"list_metric": ["position"]
 	}
 }

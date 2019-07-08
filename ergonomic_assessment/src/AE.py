@@ -88,23 +88,24 @@ class VariationalAutoencoder(nn.Module):
 
 class ModelAutoencoder():
 	"""docstring for ModelAutoencoder"""
-	def __init__(self, parser):
+	def __init__(self, parser, path_data = ""):
 		parser.add_argument('--file', '-f', help='Configuration file', default="config/config_AE.json")
 		parser.add_argument('--config', '-c', help='Configuration type', default="DEFAULT")
 		args=parser.parse_args()
 		config_file = args.file
 		config_type = args.config
 
-		self.initilization(config_file, config_type)
+		self.initilization(config_file, config_type, path_data = path_data)
 		self.load_data(self.path)
 		self.config_model()
 
-	def initilization(self, config_file, config_type = 'DEFAULT'):
+	def initilization(self, config_file, config_type = 'DEFAULT', path_data = ""):
 		# Parameters configuration
 		with open(config_file, 'r') as f:
 			param_init = json.load(f)
 
-		self.path = param_init["path_data"]
+		self.path = path_data + param_init["path_data"]
+
 
 		self.config = param_init[config_type]
 		
@@ -114,12 +115,14 @@ class ModelAutoencoder():
 		self.tracks = ['details']
 		self.ratio_split = self.config["ratio_split_sets"]
 		self.input_type = self.config["input_type"]
+		self.list_metric = self.config["list_metric"]
 		
 	def config_model(self):
 		self.nbr_epoch = int(self.config["epoch"])
 		self.latent_dim = self.config["latent_dim"]
 		self.hidden_dim = self.config["hidden_dim"]
 		self.type_AE = self.config["type_AE"]
+
 
 		if self.type_AE == 'AE':
 			self.autoencoder = AutoEncoder(self.input_dim, self.latent_dim, self.hidden_dim)
@@ -255,8 +258,6 @@ class ModelAutoencoder():
 
 				else:
 					loss_score[metric].append(np.sqrt(np.square(input_data - output_data).mean()))
-					print(loss_score)
-
 				
 
 				list_loss.append(loss_score[metric][epoch]) 
@@ -298,6 +299,9 @@ class ModelAutoencoder():
 
 	def get_data_test(self):
 		return self.data_test
+
+	def get_list_metric(self):
+		return self.list_metric
 
 
 
