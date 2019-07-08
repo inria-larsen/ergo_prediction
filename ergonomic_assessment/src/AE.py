@@ -177,10 +177,10 @@ class ModelAutoencoder():
 		input_data = np.copy(b_x.detach().numpy())
 
 		for i in range(self.input_dim):
-			input_data[:,i] = np.rad2deg(input_data[:,i]*self.var_norm[i] + self.mean_norm[i])
+			input_data[:,i] = np.asarray(input_data[:,i]*self.var_norm[i] + self.mean_norm[i])
 
-		# if self.input_type == 'jointAngle':
-		# 	input_data = np.rad2deg(input_data[:,i])
+		if self.input_type == 'jointAngle':
+			input_data = np.rad2deg(input_data)
 
 		if 'position' in list_metric:
 			# input_position = np.zeros((len(input_data), 12))
@@ -230,7 +230,10 @@ class ModelAutoencoder():
 			output_data = np.copy(decoded.detach().numpy())
 
 			for i in range(self.input_dim):
-				output_data[:,i] = np.rad2deg(output_data[:,i]*self.var_norm[i] + self.mean_norm[i])
+				output_data[:,i] = np.asarray(output_data[:,i]*self.var_norm[i] + self.mean_norm[i])
+
+			if self.input_type == 'jointAngle':
+				output_data = np.rad2deg(output_data)
 
 			for metric in list_metric:
 				if metric == 'jointAngle':
@@ -249,6 +252,10 @@ class ModelAutoencoder():
 							output_position[i,num_link*3:num_link*3+3] = skeleton.get_segment_position(linkname)[0:3,3]
 
 					loss_score[metric].append(np.sqrt(np.square(input_position - output_position).mean()))
+
+				else:
+					loss_score[metric].append(np.sqrt(np.square(input_data - output_data).mean()))
+					print(loss_score)
 
 				
 
