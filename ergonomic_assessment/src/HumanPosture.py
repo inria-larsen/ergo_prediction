@@ -2,7 +2,6 @@ import numpy as np
 import json
 import torch
 import math
-import tools
 
 class HumanPosture():
 	"""
@@ -41,7 +40,7 @@ class HumanPosture():
 				self.reduced_dof += 1
 
 	def update_posture(self, input_joints):
-		self.joints_whole_body = np.deg2rad(input_joints)
+		self.joints_whole_body = np.asarray(input_joints)
 		self.joint_reduce_body = np.zeros(self.reduced_dof)
 		self.mapping_posture()
 
@@ -77,75 +76,6 @@ class HumanPosture():
 	def get_joint_angle(self, name_joint):
 		id_joint = self.list_all_joints.index(name_joint)
 		return self.joint_reduce_body[id_joint]
-
-	def get_point_pos(self, linkname):
-		"""
-		Return the cartesian position of the end point of a segment
-		"""
-
-		H = np.matrix([[1., 0., 0., 0.], [0., 1., 0., 0.], [0., 0., 1., 0.], [0., 0., 0., 1.]])
-		direction_joint = ['pitch', 'roll', 'yaw']
-
-		link_skip = ['PelvisR', 'PelvisL', 'ShoulderR', 'ShoulderL']
-
-		while linkname != 'root':
-			segment = self.skeleton_param['list_segments'][linkname]
-			joint = segment['points'][0]
-			theta = np.zeros(3)
-
-			length = segment['length']*np.asarray(segment['init_dir'])
-			length = length*self.size
-
-			Rx = tools.quat2rot(np.array([np.cos(theta[0]), np.sin(theta[0]), 0., 0.]))
-			Ry = tools.quat2rot(np.array([np.cos(theta[1]), 0., np.sin(theta[1]), 0.]))
-			Rz = tools.quat2rot(np.array([np.cos(theta[2]), 0., 0., np.sin(theta[2])]))
-			R = Rx * Ry * Rz
-			Hjoint = np.matrix([[R[0,0], R[0,1], R[0,2], length[0]], [R[1,0], R[1,1], R[1,2], length[1]], [R[2,0], R[2,1], R[2,2], length[2]], [0, 0, 0, 1]])
-
-			if linkname in link_skip:
-				linkname = segment['parent']
-				
-			else:
-				jointAngle = np.zeros(3)
-				for num_dir, direction in enumerate(direction_joint):
-					jointAngle[num_dir] = np.deg2rad(self.get_joint_angle(joint + '_' + direction))
-
-					qi = jointAngle[num_dir]
-
-					if num_dir == 0:
-						Hi = np.matrix([[1., 0., 0., 0.], [0., np.cos(qi), -np.sin(qi), 0.], [0., np.sin(qi), np.cos(qi), 0.], [0, 0, 0, 1]])
-					elif num_dir == 1:
-						Hi = np.matrix([[np.cos(qi), 0., np.sin(qi), 0.], [0., 1., 0., 0.], [-np.sin(qi), 0., np.cos(qi), 0.], [0, 0, 0, 1]])
-					elif num_dir == 2:
-						Hi = np.matrix([[np.cos(qi), -np.sin(qi), 0., 0.], [np.sin(qi), np.cos(qi), 0., 0.], [0., 0., 1., 0.], [0, 0, 0, 1]])
-					
-					H = Hi * H
-					
-			H = Hjoint * H
-			linkname = segment['parent']
-
-		pos = np.zeros(3)
-		pos[0] = H[0, 3]
-		pos[1] = H[1, 3]
-		pos[2] = H[2, 3]
-
-		return pos
-
-	def joint2pos(self):
-		"""
-		Convert the joint angle data to cartesian position
-		"""
-		self.size = 1.75
-
-		list_points = self.skeleton_param['list_points']
-		list_segments = self.skeleton_param['list_segments']
-
-		data_pos = np.zeros(3)
-
-		for num_segment, segment in enumerate(list_segments):
-			point = self.skeleton_param['list_segments'][segment]['points'][1]
-			pos = self.getPointPos(segment)
-			self.skeleton_param['list_points'][point]['position'] = pos
 
 	def visualise_from_joints(self, ax):
 		"""

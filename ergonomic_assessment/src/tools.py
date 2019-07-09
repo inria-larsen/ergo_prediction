@@ -9,6 +9,9 @@ import pickle
 from sklearn.model_selection import train_test_split
 from matplotlib import animation
 
+from ErgoAssessment import ErgoAssessment
+from HumanPosture import HumanPosture
+
 list_joints = ['jL5S1',
 			'jL4L3',
 			'jL1T12',
@@ -286,6 +289,16 @@ def animate_skeleton():
 
 def plot_loss_function(metric):
 	return
+
+def compute_sequence_ergo(data, num_frame):
+	score_total = 'RULA_SCORE'
+	human_posture = HumanPosture('config/mapping_joints.json')
+	ergo_assessment = ErgoAssessment('config/rula_config.json')
+
+	human_posture.update_posture(data)
+	ergo_assessment.compute_ergo_scores(human_posture)
+	return ergo_assessment['RULA_SCORE']
+
 
 
 
