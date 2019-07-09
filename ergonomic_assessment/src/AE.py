@@ -106,7 +106,6 @@ class ModelAutoencoder():
 
 		self.path = path_data + param_init["path_data"]
 
-
 		self.config = param_init[config_type]
 		
 		self.BATCH_SIZE = 64
@@ -191,8 +190,6 @@ class ModelAutoencoder():
 			end_effectors = ['Right Hand', 'Left Hand', 'Right Foot', 'Left Foot']
 
 			pool = mp.Pool(mp.cpu_count())
-			# position = [pool.apply(skeleton.update_posture, args=(data, True)) for data in input_data]
-			# position = pool.starmap(skeleton.update_posture, [(data, True) for data in input_data])
 
 			result_objects = [pool.apply_async(skeleton.update_posture, args=(data, True, i)) for i, data in enumerate(input_data)]
 			input_position = [r.get() for r in result_objects]
@@ -250,9 +247,13 @@ class ModelAutoencoder():
 
 				elif metric == 'position':
 					for i in range(len(input_data)):
-						skeleton.update_posture(output_data[i])
-						for num_link, linkname in enumerate(end_effectors):
-							output_position[i,num_link*3:num_link*3+3] = skeleton.get_segment_position(linkname)[0:3,3]
+						pool = mp.Pool(mp.cpu_count())
+
+						result_objects = [pool.apply_async(skeleton.update_posture, args=(data, True, i)) for i, data in enumerate(output_data)]
+						output_position = [r.get() for r in result_objects]
+
+						pool.close()
+						pool.join()
 
 					loss_score[metric].append(np.sqrt(np.square(input_position - output_position).mean()))
 
