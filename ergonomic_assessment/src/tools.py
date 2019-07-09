@@ -290,14 +290,16 @@ def animate_skeleton():
 def plot_loss_function(metric):
 	return
 
-def compute_sequence_ergo(data, num_frame):
-	score_total = 'RULA_SCORE'
+def compute_sequence_ergo(data, num_frame, list_score):
+	score_total = []
 	human_posture = HumanPosture('config/mapping_joints.json')
 	ergo_assessment = ErgoAssessment('config/rula_config.json')
 
 	human_posture.update_posture(data)
 	ergo_assessment.compute_ergo_scores(human_posture)
-	return ergo_assessment['RULA_SCORE']
+	for score in list_score:
+		score_total.append(ergo_assessment[score])
+	return score_total
 
 
 

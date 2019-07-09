@@ -72,6 +72,7 @@ class ErgoAssessment:
 		self.posture = posture
 		for ergo_score in self._list_ergo_score:
 			self._compute_score(self._list_ergo_score[ergo_score])
+		return 
 
 	def _compute_score(self, ergo_score):
 		"""Compute a specific ergonomic score send in parameter
@@ -104,7 +105,10 @@ class ErgoAssessment:
 				range(len(local_score['info']['threshold'][num_joint]))):
 				if threshold[0] < joint_angle <= threshold[1]:
 					ergo_temp = local_score['info']['related_value'][num_joint][i]
-			ergo_value += ergo_temp
+			try:
+				ergo_value += ergo_temp
+			except:
+				raise NameError(joint, threshold, joint_angle)
 
 		return ergo_value
 
@@ -137,6 +141,10 @@ class ErgoAssessment:
 
 	def get_list_score(self):
 		return self._list_ergo_score
+
+	def get_list_score_name(self):
+		score = [score for score in self._list_ergo_score]
+		return  score
 
 	def get_ergo_score(self, name_score): 
 		"""Return the dictionnary of the ergonomic score with the name in input.
