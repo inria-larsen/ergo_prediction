@@ -26,6 +26,17 @@ import multiprocessing as mp
 # 		loss_score[metric].append(np.sqrt(np.square(input_data - output_data).mean()))
 # 		return loss
 
+class AutoEncoderSimple(nn.Module):
+	def __init__(self, input_dim, latent_variable_dim):
+		super(AutoEncoderSimple, self).__init__()
+
+		self.encoder = nn.Sequential(nn.Linear(input_dim, latent_variable_dim))
+		self.decoder = nn.Sequential(nn.Linear(latent_variable_dim, input_dim))
+
+	def forward(self, x):
+		encoded = self.encoder(x)
+		decoded = self.decoder(encoded)
+		return encoded, decoded
 
 class AutoEncoder(nn.Module):
 	def __init__(self, input_dim, latent_variable_dim, hidden_dim):
@@ -34,18 +45,16 @@ class AutoEncoder(nn.Module):
 		self.encoder = nn.Sequential(
 			nn.Linear(input_dim, hidden_dim)
 			,
-			# nn.ReLU(True)
-			# nn.Linear(hidden_dim, latent_variable_dim),
-			# nn.ReLU(True)
-			# nn.Sigmoid()
+			nn.ReLU(True),
+			nn.Linear(hidden_dim, latent_variable_dim),
+			nn.ReLU(True)
 			)
 		self.decoder = nn.Sequential(
-			# nn.Linear(latent_variable_dim, hidden_dim)
-			# ,
-			# nn.ReLU(True),
+			nn.Linear(latent_variable_dim, hidden_dim)
+			,
+			nn.ReLU(True),
 			nn.Linear(hidden_dim, input_dim),
-			# nn.ReLU(True)
-			# nn.Sigmoid()
+			nn.ReLU(True)
 			)
 
 	def forward(self, x):
@@ -125,6 +134,8 @@ class ModelAutoencoder():
 
 		if self.type_AE == 'AE':
 			self.autoencoder = AutoEncoder(self.input_dim, self.latent_dim, self.hidden_dim)
+		elif self.type_AE == 'AE_simple':
+			self.autoencoder = AutoEncoderSimple(self.input_dim, self.latent_dim)
 		elif self.type_AE == 'VAE':
 			self.autoencoder = VariationalAutoencoder(self.input_dim, self.latent_dim, self.hidden_dim)
 
@@ -181,9 +192,6 @@ class ModelAutoencoder():
 		for i in range(self.input_dim):
 			input_data[:,i] = np.asarray(input_data[:,i]*self.var_norm[i] + self.mean_norm[i])
 
-		if self.input_type == 'jointAngle':
-			input_data = np.rad2deg(input_data)
-
 		if 'position' in list_metric:
 			# input_position = np.zeros((len(input_data), 12))
 			output_position = np.zeros((len(input_data), 12))
@@ -203,18 +211,20 @@ class ModelAutoencoder():
 				# 	input_position[i,num_link*3:num_link*3+3] = skeleton.get_segment_position(linkname)[0:3,3]
 
 		if 'ergo_score' in list_metric:
-			score_total = 'RULA_SCORE'
-			human_posture = HumanPosture('config/mapping_joints.json')
 			ergo_assessment = ErgoAssessment('config/rula_config.json')
+			list_ergo_score = ergo_assessment.get_list_score_name()
 
-			input_ergo = np.zeros((len(input_data), 1))
-			output_ergo = np.zeros((len(input_data), 1))
+			input_ergo = np.zeros((len(input_data), len(list_ergo_score)))
+			output_ergo = np.zeros((len(input_data), len(list_ergo_score)))
 
-			for i in range(len(input_data)):
-				human_posture.update_posture(input_data[i])
-				ergo_assessment.compute_ergo_scores(human_posture)
-				input_ergo[i] = ergo_assessment[score_total]
+			pool = mp.Pool(mp.cpu_count())
 
+			result_objects = [pool.apply_async(tools.compute_sequence_ergo, args=(data, i, list_ergo_score)) for i, data in enumerate(input_data)]
+			input_ergo = [r.get() for r in result_objects]
+			input_ergo = np.asarray(input_ergo)
+
+			pool.close()
+			pool.join()
 
 		list_loss = []
 		for epoch in range(self.nbr_epoch):
@@ -230,19 +240,25 @@ class ModelAutoencoder():
 			output_data = np.copy(decoded.detach().numpy())
 
 			for i in range(self.input_dim):
-				output_data[:,i] = np.asarray(output_data[:,i]*self.var_norm[i] + self.mean_norm[i])
-
-			if self.input_type == 'jointAngle':
-				output_data = np.rad2deg(output_data)
+				output_data[:,i] = np.asarray(output_data[:,i]*self.var_norm[i] + self.mean_norm[i])		
 
 			for metric in list_metric:
 				if metric == 'jointAngle':
-					loss_score[metric].append(np.sqrt(np.square(input_data - output_data).mean()))
+					input_joint = np.rad2deg(input_data)
+					output_joint = np.rad2deg(output_data)
+					loss_score[metric].append(np.sqrt(np.square(input_joint - output_joint).mean()))
+
 				if metric == 'ergo_score':
-					for i in range(len(input_data)):
-						human_posture.update_posture(output_data[i])
-						ergo_assessment.compute_ergo_scores(human_posture)
-						output_ergo[i] = ergo_assessment[score_total]
+					pool = mp.Pool(mp.cpu_count())
+
+					result_objects = [pool.apply_async(tools.compute_sequence_ergo, args=(data, i, list_ergo_score)) for i, data in enumerate(output_data)]
+					output_ergo = [r.get() for r in result_objects]
+
+					pool.close()
+					pool.join()
+
+					output_ergo = np.asarray(output_ergo)
+
 					loss_score[metric].append(np.sqrt(np.square(input_ergo - output_ergo).mean()))
 
 				elif metric == 'position':
@@ -267,7 +283,7 @@ class ModelAutoencoder():
 
 				if len(list_loss) > 500:
 					del list_loss[0]
-					if np.std(list_loss) < 0.01:
+					if np.std(list_loss) < 0.001:
 						return loss_score
 
 		return loss_score

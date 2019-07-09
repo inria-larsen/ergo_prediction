@@ -54,7 +54,7 @@
 			"type_score": "jointAngle",
 			"related_score": "none",
 			"related_joint": ["jRElbow_pitch"],
-			"threshold":[[[60,100], [100, 180], [-25, 60]]],
+			"threshold":[[[60,100], [100, 180], [-60, 60]]],
 			"related_value": [[1, 2, 2]]
 		},
 
@@ -62,7 +62,7 @@
 			"type_score": "jointAngle",
 			"related_score": "none",
 			"related_joint": ["jLElbow_pitch"],
-			"threshold":[[[60,100], [100, 180], [-25, 60]]],
+			"threshold":[[[60,100], [100, 180], [-60, 60]]],
 			"related_value": [[1, 2, 2]]
 		},
 

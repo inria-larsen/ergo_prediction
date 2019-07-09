@@ -41,7 +41,7 @@ if __name__ == '__main__':
 
 	for metric in list_metric:
 		for i, size in enumerate(size_list):
-			autoencoder.change_config('hidden_dim', size)
+			autoencoder.change_config('latent_variable_dim', size)
 			loss[i] = autoencoder.train_model(list_metric=list_metric)
 			loss.append([])
 			path = local_path + "/save/" + metric + "/"

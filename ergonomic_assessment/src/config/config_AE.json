@@ -5,7 +5,7 @@
 		"hidden_dim": 10,
 		"epoch":  5000,
 		"ratio_split_sets": [70, 30, 0],
-		"type_AE": "AE",
+		"type_AE": "AE_simple",
 		"input_type": "jointAngle",
 		"list_metric": ["jointAngle"]
 	},
@@ -35,7 +35,7 @@
 		"hidden_dim": 10,
 		"epoch":  5000,
 		"ratio_split_sets": [70, 30, 0],
-		"type_AE": "AE",
+		"type_AE": "AE_simple",
 		"input_type": "jointAngle",
 		"list_metric": ["ergo_score"]
 	}
