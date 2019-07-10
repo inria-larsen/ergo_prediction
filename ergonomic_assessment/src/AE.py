@@ -142,7 +142,7 @@ class ModelAutoencoder():
 
 		elif self.output_type == 'ergo_posture':
 			self.ergo_assessment = ErgoAssessment('config/rula_config.json')
-			self.list_ergo_score = self.ergo_assessment.get_list_score_name().sort()
+			self.list_ergo_score = self.ergo_assessment.get_list_score_name()
 			self.list_ergo_score.sort()
 			self.output_dim = len(self.list_ergo_score) + self.input_dim
 
@@ -183,17 +183,23 @@ class ModelAutoencoder():
 		x_norm, self.input_mean, self.input_var = tools.standardization(self.data_train)
 		self.train_loader = torch.from_numpy(x_norm)
 
-		data_ergo2 = tools.destandardization(x_norm, self.input_mean, self.input_var)
-
 		if self.output_type == 'ergo':
+			self.data_ergo = self.prepare_data('ergo_score', self.data_train)
+			
+
+			x_ergo, self.loss_data_min, self.loss_data_max = tools.normalization(self.data_ergo)
+
+			self.data_loss = torch.from_numpy(x_ergo)
+			# data_ergo2 = tools.denormalization(x_ergo, self.loss_data_min, self.loss_data_max)
+
+
+		elif self.output_type == 'ergo_posture':
 			self.data_ergo = self.prepare_data('ergo_score', self.data_train)
 			x_ergo, self.loss_data_mean, self.loss_data_var = tools.standardization(self.data_ergo)
 			self.data_loss = torch.from_numpy(x_ergo)
-			data_ergo2 = tools.destandardization(x_ergo, self.loss_data_mean, self.loss_data_var)
 
 		else:
 			self.data_loss = torch.from_numpy(x_norm)
-
 
 		x_joint = np.asarray(self.data_test)
 		x_norm = np.copy(x_joint)
@@ -215,8 +221,12 @@ class ModelAutoencoder():
 
 		input_data = np.copy(b_y.detach().numpy())
 
-		for i in range(self.output_dim):
-			input_data[:,i] = np.asarray(input_data[:,i]*self.loss_data_var[i] + self.loss_data_mean[i])
+		if self.output_type == 'ergo':
+			input_data = tools.denormalization(input_data, self.loss_data_min, self.loss_data_max)
+
+		else:
+			for i in range(self.output_dim):
+				input_data[:,i] = np.asarray(input_data[:,i]*self.loss_data_var[i] + self.loss_data_mean[i])
 
 		list_loss = []
 		for epoch in range(self.nbr_epoch):
@@ -231,9 +241,13 @@ class ModelAutoencoder():
 			
 			output_data = np.copy(decoded.detach().numpy())
 
-			for i in range(self.output_dim):
-				output_data[:,i] = np.asarray(output_data[:,i]*self.loss_data_var[i] + self.loss_data_mean[i])		
-				
+			if self.output_type == 'ergo':
+				output_data = tools.denormalization(output_data, self.loss_data_min, self.loss_data_max)
+
+			else:
+				for i in range(self.output_dim):
+					output_data[:,i] = np.asarray(output_data[:,i]*self.loss_data_var[i] + self.loss_data_mean[i])	
+	
 			loss_score.append(np.sqrt(np.square(input_data - output_data).mean()))
 			
 			list_loss.append(loss_score[epoch]) 
@@ -244,8 +258,6 @@ class ModelAutoencoder():
 				del list_loss[0]
 				if np.std(list_loss) < 0.0001:
 					return loss_score
-
-			# self.test_model()
 
 		return loss_score
 
