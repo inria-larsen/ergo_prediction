@@ -37,20 +37,22 @@ if __name__ == '__main__':
 	list_metric = autoencoder.get_list_metric()
 
 	size_list = [1, 2, 5, 10, 20, 30, 45, 66]
-	loss = [[]]
+	loss = []
+
+	all_data_test = autoencoder.get_data_test()
 
 	for metric in list_metric:
+		test_data = autoencoder.prepare_data(metric, all_data_test)
+
 		for i, size in enumerate(size_list):
 			autoencoder.change_config('latent_variable_dim', size)
-			loss[i] = autoencoder.train_model(list_metric=list_metric)
-			loss.append([])
+			loss = autoencoder.train_model(list_metric=list_metric)
+			# score_metric = autoencoder.test_model(list_metric=list_metric)
 			path = local_path + "/save/" + metric + "/"
 			if not os.path.exists(path):
 				os.mkdir(path)
 			pickle.dump(autoencoder, open(path + "autoencoder_" + str(size) + ".pkl", "wb" ) )
-			pickle.dump(loss[i], open(path + "loss_" + str(size) + ".pkl", "wb" ) )
-
-		del loss[-1]
+			pickle.dump(loss, open(path + "loss_" + str(size) + ".pkl", "wb" ) )
 
 	# for metric in list_metric:
 
