@@ -313,8 +313,8 @@ def standardization(data):
 	size_data, input_dim = np.shape(data)
 	for i in range(input_dim):
 		if var_data[i] == 0:
-			var_data[i] = 0.00001
-			
+			var_data[i] = 0.1
+
 		data_norm[:,i] = (data[:,i] - mean_data[i])/var_data[i]
 		# x_norm[:,i] = (x_joint[:,i] - mean_data[i])
 	data_norm = data_norm.astype(np.float32)
@@ -336,7 +336,12 @@ def normalization(data):
 
 	size_data, input_dim = np.shape(data)
 	for i in range(input_dim):
+		if min_data[i] == max_data[i]:
+			max_data[i] += 0.00001
+			min_data[i] -= 0.00001
 		data_norm[:,i] = (data[:,i] - min_data[i])/(max_data[i] - min_data[i])
+
+	data_norm = data_norm.astype(np.float32)
 
 	return data_norm, min_data, max_data
 
