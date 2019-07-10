@@ -301,6 +301,52 @@ def compute_sequence_ergo(data, num_frame, list_score):
 		score_total.append(ergo_assessment[score])
 	return score_total
 
+def standardization(data):
+	data = np.asarray(data)
+	data_norm = np.copy(data)
+	data_norm = data_norm.astype('float64')
+
+	mean_data = np.mean(data, axis = 0)
+	var_data = np.std(data, axis = 0)
+	x_norm = np.copy(data)
+
+	size_data, input_dim = np.shape(data)
+	for i in range(input_dim):
+		if var_data[i] == 0:
+			var_data[i] = 0.00001
+			
+		data_norm[:,i] = (data[:,i] - mean_data[i])/var_data[i]
+		# x_norm[:,i] = (x_joint[:,i] - mean_data[i])
+	data_norm = data_norm.astype(np.float32)
+
+	return data_norm, mean_data, var_data
+
+def destandardization(data, mean_data, var_data):
+	size_data, input_dim = np.shape(data)
+	for i in range(input_dim):
+		data[:,i] = np.asarray(data[:,i]*var_data[i] + mean_data[i])	
+
+	return data
+
+def normalization(data):
+	data_norm = np.copy(data)
+	data_norm = data_norm.astype('float64')
+	min_data = np.min(data, axis = 0)
+	max_data = np.max(data, axis = 0)
+
+	size_data, input_dim = np.shape(data)
+	for i in range(input_dim):
+		data_norm[:,i] = (data[:,i] - min_data[i])/(max_data[i] - min_data[i])
+
+	return data_norm, min_data, max_data
+
+def denormalization(data, min_data, max_data):
+	size_data, input_dim = np.shape(data)
+	for i in range(input_dim):
+		data[:,i] = data[:,i]*(max_data[i] - min_data[i])+min_data[i]
+
+	return data
+
 
 
 

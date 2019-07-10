@@ -27,11 +27,11 @@ import multiprocessing as mp
 # 		return loss
 
 class AutoEncoderSimple(nn.Module):
-	def __init__(self, input_dim, latent_variable_dim):
+	def __init__(self, input_dim, latent_variable_dim, output_dim):
 		super(AutoEncoderSimple, self).__init__()
 
 		self.encoder = nn.Sequential(nn.Linear(input_dim, latent_variable_dim))
-		self.decoder = nn.Sequential(nn.Linear(latent_variable_dim, input_dim))
+		self.decoder = nn.Sequential(nn.Linear(latent_variable_dim, output_dim))
 
 	def forward(self, x):
 		encoded = self.encoder(x)
@@ -39,7 +39,7 @@ class AutoEncoderSimple(nn.Module):
 		return encoded, decoded
 
 class AutoEncoder(nn.Module):
-	def __init__(self, input_dim, latent_variable_dim, hidden_dim):
+	def __init__(self, input_dim, latent_variable_dim, hidden_dim, output_dim):
 		super(AutoEncoder, self).__init__()
 
 		self.encoder = nn.Sequential(
@@ -53,7 +53,7 @@ class AutoEncoder(nn.Module):
 			nn.Linear(latent_variable_dim, hidden_dim)
 			,
 			nn.ReLU(True),
-			nn.Linear(hidden_dim, input_dim),
+			nn.Linear(hidden_dim, output_dim),
 			nn.ReLU(True)
 			)
 
@@ -63,7 +63,7 @@ class AutoEncoder(nn.Module):
 		return encoded, decoded
 
 class VariationalAutoencoder(nn.Module):
-	def __init__(self, input_dim, latent_variable_dim, hidden_dim):
+	def __init__(self, input_dim, latent_variable_dim, hidden_dim, output_dim):
 		super(VariationalAutoencoder, self).__init__()
 		self.input_dim = input_dim
 		self.fc1 = nn.Linear(input_dim, hidden_dim)
@@ -71,7 +71,7 @@ class VariationalAutoencoder(nn.Module):
 		self.fc2s = nn.Linear(hidden_dim, latent_variable_dim) # use for standard deviation
 		
 		self.fc3 = nn.Linear(latent_variable_dim, hidden_dim)
-		self.fc4 = nn.Linear(hidden_dim, input_dim)
+		self.fc4 = nn.Linear(hidden_dim, output_dim)
 		
 	def reparameterize(self, log_var, mu):
 		s = torch.exp(0.5*log_var)
@@ -96,7 +96,9 @@ class VariationalAutoencoder(nn.Module):
 
 
 class ModelAutoencoder():
-	"""docstring for ModelAutoencoder"""
+	"""
+
+	"""
 	def __init__(self, parser, path_data = ""):
 		parser.add_argument('--file', '-f', help='Configuration file', default="config/config_AE.json")
 		parser.add_argument('--config', '-c', help='Configuration type', default="DEFAULT")
@@ -124,6 +126,7 @@ class ModelAutoencoder():
 		self.ratio_split = self.config["ratio_split_sets"]
 		self.input_type = self.config["input_type"]
 		self.list_metric = self.config["list_metric"]
+		self.output_type = self.config["output_type"]
 		
 	def config_model(self):
 		self.nbr_epoch = int(self.config["epoch"])
@@ -131,13 +134,27 @@ class ModelAutoencoder():
 		self.hidden_dim = self.config["hidden_dim"]
 		self.type_AE = self.config["type_AE"]
 
+		if self.output_type == 'ergo':
+			self.ergo_assessment = ErgoAssessment('config/rula_config.json')
+			self.list_ergo_score = self.ergo_assessment.get_list_score_name()
+			self.list_ergo_score.sort()
+			self.output_dim = len(self.list_ergo_score)
+
+		elif self.output_type == 'ergo_posture':
+			self.ergo_assessment = ErgoAssessment('config/rula_config.json')
+			self.list_ergo_score = self.ergo_assessment.get_list_score_name().sort()
+			self.list_ergo_score.sort()
+			self.output_dim = len(self.list_ergo_score) + self.input_dim
+
+		else:
+			self.output_dim = self.input_dim
 
 		if self.type_AE == 'AE':
-			self.autoencoder = AutoEncoder(self.input_dim, self.latent_dim, self.hidden_dim)
+			self.autoencoder = AutoEncoder(self.input_dim, self.latent_dim, self.hidden_dim, self.output_dim)
 		elif self.type_AE == 'AE_simple':
-			self.autoencoder = AutoEncoderSimple(self.input_dim, self.latent_dim)
+			self.autoencoder = AutoEncoderSimple(self.input_dim, self.latent_dim, self.output_dim)
 		elif self.type_AE == 'VAE':
-			self.autoencoder = VariationalAutoencoder(self.input_dim, self.latent_dim, self.hidden_dim)
+			self.autoencoder = VariationalAutoencoder(self.input_dim, self.latent_dim, self.hidden_dim, self.output_dim)
 
 		self.optimizer = torch.optim.Adam(self.autoencoder.parameters(), lr=self.LR)
 		self.loss_func = nn.MSELoss()
@@ -163,68 +180,43 @@ class ModelAutoencoder():
 			for d_joint in data_joint:
 				self.data_test.append(d_joint)
 
-		x_joint = np.asarray(self.data_train)
-
-		x_norm = np.copy(x_joint)
-		x_joint = x_joint.astype(np.float32)
-		self.mean_norm = np.mean(x_joint, axis = 0)
-		self.var_norm = np.std(x_joint, axis = 0)
-
-		size_data, self.input_dim = np.shape(x_joint)
-		for i in range(self.input_dim):
-			x_norm[:,i] = (x_joint[:,i] - self.mean_norm[i])/self.var_norm[i]
-		x_norm = x_norm.astype(np.float32)
-
+		x_norm, self.input_mean, self.input_var = tools.standardization(self.data_train)
 		self.train_loader = torch.from_numpy(x_norm)
 
+		data_ergo2 = tools.destandardization(x_norm, self.input_mean, self.input_var)
+
+		if self.output_type == 'ergo':
+			self.data_ergo = self.prepare_data('ergo_score', self.data_train)
+			x_ergo, self.loss_data_mean, self.loss_data_var = tools.standardization(self.data_ergo)
+			self.data_loss = torch.from_numpy(x_ergo)
+			data_ergo2 = tools.destandardization(x_ergo, self.loss_data_mean, self.loss_data_var)
+
+		else:
+			self.data_loss = torch.from_numpy(x_norm)
+
+
+		x_joint = np.asarray(self.data_test)
+		x_norm = np.copy(x_joint)
+		x_joint = x_joint.astype(np.float32)
+		size_data, self.input_dim = np.shape(x_joint)
+		for i in range(self.input_dim):
+			x_norm[:,i] = (x_joint[:,i] - self.input_mean[i])/self.input_var[i]
+		x_norm = x_norm.astype(np.float32)
+
+		self.test_loader = torch.from_numpy(x_norm)
+
 	def train_model(self, nbr_epoch = 100, list_metric = ['jointAngle']):
-		loss_score = {}
-		for metric in list_metric:
-			loss_score[metric] = []
+		loss_score = []
 
 		skeleton = Skeleton('dhm66_ISB_Xsens.urdf')
 
 		b_x = self.train_loader.view(-1, self.input_dim)
-		b_y = self.train_loader.view(-1, self.input_dim)
+		b_y = self.data_loss.view(-1, self.output_dim)
 
-		input_data = np.copy(b_x.detach().numpy())
+		input_data = np.copy(b_y.detach().numpy())
 
-		for i in range(self.input_dim):
-			input_data[:,i] = np.asarray(input_data[:,i]*self.var_norm[i] + self.mean_norm[i])
-
-		if 'position' in list_metric:
-			# input_position = np.zeros((len(input_data), 12))
-			output_position = np.zeros((len(input_data), 12))
-			end_effectors = ['Right Hand', 'Left Hand', 'Right Foot', 'Left Foot']
-
-			pool = mp.Pool(mp.cpu_count())
-
-			result_objects = [pool.apply_async(skeleton.update_posture, args=(data, True, i)) for i, data in enumerate(input_data)]
-			input_position = [r.get() for r in result_objects]
-
-			pool.close()
-			pool.join()
-
-			# for i in range(len(input_data)):
-			# 	skeleton.update_posture(input_data[i])
-				# for num_link, linkname in enumerate(end_effectors):
-				# 	input_position[i,num_link*3:num_link*3+3] = skeleton.get_segment_position(linkname)[0:3,3]
-
-		if 'ergo_score' in list_metric:
-			ergo_assessment = ErgoAssessment('config/rula_config.json')
-			list_ergo_score = ergo_assessment.get_list_score_name()
-
-			input_ergo = np.zeros((len(input_data), len(list_ergo_score)))
-			output_ergo = np.zeros((len(input_data), len(list_ergo_score)))
-
-			pool = mp.Pool(mp.cpu_count())
-
-			result_objects = [pool.apply_async(tools.compute_sequence_ergo, args=(data, i, list_ergo_score)) for i, data in enumerate(input_data)]
-			input_ergo = [r.get() for r in result_objects]
-			input_ergo = np.asarray(input_ergo)
-
-			pool.close()
-			pool.join()
+		for i in range(self.output_dim):
+			input_data[:,i] = np.asarray(input_data[:,i]*self.loss_data_var[i] + self.loss_data_mean[i])
 
 		list_loss = []
 		for epoch in range(self.nbr_epoch):
@@ -239,77 +231,43 @@ class ModelAutoencoder():
 			
 			output_data = np.copy(decoded.detach().numpy())
 
-			for i in range(self.input_dim):
-				output_data[:,i] = np.asarray(output_data[:,i]*self.var_norm[i] + self.mean_norm[i])		
-
-			for metric in list_metric:
-				if metric == 'jointAngle':
-					input_joint = np.rad2deg(input_data)
-					output_joint = np.rad2deg(output_data)
-					loss_score[metric].append(np.sqrt(np.square(input_joint - output_joint).mean()))
-
-				if metric == 'ergo_score':
-					pool = mp.Pool(mp.cpu_count())
-
-					result_objects = [pool.apply_async(tools.compute_sequence_ergo, args=(data, i, list_ergo_score)) for i, data in enumerate(output_data)]
-					output_ergo = [r.get() for r in result_objects]
-
-					pool.close()
-					pool.join()
-
-					output_ergo = np.asarray(output_ergo)
-
-					loss_score[metric].append(np.sqrt(np.square(input_ergo - output_ergo).mean()))
-
-				elif metric == 'position':
-					for i in range(len(input_data)):
-						pool = mp.Pool(mp.cpu_count())
-
-						result_objects = [pool.apply_async(skeleton.update_posture, args=(data, True, i)) for i, data in enumerate(output_data)]
-						output_position = [r.get() for r in result_objects]
-
-						pool.close()
-						pool.join()
-
-					loss_score[metric].append(np.sqrt(np.square(input_position - output_position).mean()))
-
-				else:
-					loss_score[metric].append(np.sqrt(np.square(input_data - output_data).mean()))
+			for i in range(self.output_dim):
+				output_data[:,i] = np.asarray(output_data[:,i]*self.loss_data_var[i] + self.loss_data_mean[i])		
 				
+			loss_score.append(np.sqrt(np.square(input_data - output_data).mean()))
+			
+			list_loss.append(loss_score[epoch]) 
+			if epoch%100 == 0:
+				print('Epoch: ', epoch, '| train loss: %.4f' % loss.data.numpy())
 
-				list_loss.append(loss_score[metric][epoch]) 
-				if epoch%100 == 0:
-					print('Epoch: ', epoch, '| train loss: %.4f' % loss.data.numpy())
+			if len(list_loss) > 500:
+				del list_loss[0]
+				if np.std(list_loss) < 0.0001:
+					return loss_score
 
-				if len(list_loss) > 500:
-					del list_loss[0]
-					if np.std(list_loss) < 0.001:
-						return loss_score
+			# self.test_model()
 
 		return loss_score
 
-	def test_model(self, data):
-		x_joint = np.asarray(data)
+	def test_model(self, metric = ''):
+		b_x = self.test_loader.view(-1, self.input_dim)
+		b_y = self.test_loader.view(-1, self.input_dim)
 
-		x = x_joint
-		x_norm = x_joint
-
-		for i in range(self.input_dim):
-		 	x_norm[:,i] = (x[:,i] - self.mean_norm[i])/self.var_norm[i]
-		x_norm = x_norm.astype(np.float32)
-
-		train_loader = torch.from_numpy(x_norm)
-
-		b_x = train_loader.view(-1, self.input_dim)
+		input_data = np.copy(b_x.detach().numpy())
 
 		encoded, decoded = self.autoencoder(b_x)
 
 		decoded_joint = decoded.detach().numpy()
 
 		for i in range(self.input_dim):
-			decoded_joint[:,i] = decoded_joint[:,i]*self.var_norm[i] + self.mean_norm[i]
+			decoded_joint[:,i] = decoded_joint[:,i]*self.input_var[i] + self.input_mean[i]
 
-		return decoded_joint
+		if metric == '':
+			return decoded_joint
+		else:
+			score = self.evaluate_model()
+			return decoded_joint, score
+
 
 	def get_data_train(self):
 		return self.data_train
@@ -319,6 +277,84 @@ class ModelAutoencoder():
 
 	def get_list_metric(self):
 		return self.list_metric
+
+	def prepare_data(self, metric, input_data):
+		if metric == 'position':
+			end_effectors = ['Right Hand', 'Left Hand', 'Right Foot', 'Left Foot']
+
+			pool = mp.Pool(mp.cpu_count())
+
+			result_objects = [pool.apply_async(skeleton.update_posture, args=(data, True, i)) for i, data in enumerate(input_data)]
+			self.data_eval = [r.get() for r in result_objects]
+
+			pool.close()
+			pool.join()
+
+		elif metric == 'ergo_score':
+			self.ergo_assessment = ErgoAssessment('config/rula_config.json')
+			list_ergo_score = self.ergo_assessment.get_list_score_name()
+
+			pool = mp.Pool(mp.cpu_count())
+
+			result_objects = [pool.apply_async(tools.compute_sequence_ergo, args=(data, i, list_ergo_score)) for i, data in enumerate(input_data)]
+			self.data_eval = [r.get() for r in result_objects]
+			self.data_eval = np.asarray(self.data_eval)
+
+			pool.close()
+			pool.join()
+
+		else:
+			self.data_eval = np.copy(input_data)
+
+		return self.data_eval
+
+
+	def evaluate_model(self, input_data, output_data, metric):
+		list_ergo_score = self.ergo_assessment.get_list_score_name()
+		if metric == 'jointAngle':
+			input_joint = np.rad2deg(input_data)
+			output_joint = np.rad2deg(output_data)
+			score = np.sqrt(np.square(input_joint - output_joint).mean())
+
+		elif metric == 'ergo_score':
+			pool = mp.Pool(mp.cpu_count())
+
+			result_objects = [pool.apply_async(tools.compute_sequence_ergo, args=(data, i, list_ergo_score)) for i, data in enumerate(output_data)]
+			output_ergo = [r.get() for r in result_objects]
+
+			pool.close()
+			pool.join()
+
+			output_ergo = np.asarray(output_ergo)
+
+			score = np.sqrt(np.square(input_ergo - output_ergo).mean())
+
+		elif metric == 'end_effectors':
+			for i in range(len(input_data)):
+				pool = mp.Pool(mp.cpu_count())
+
+				result_objects = [pool.apply_async(skeleton.update_posture, args=(data, True, i)) for i, data in enumerate(output_data)]
+				output_position = [r.get() for r in result_objects]
+
+				pool.close()
+				pool.join()
+
+			score = np.sqrt(np.square(input_position - output_position).mean())
+
+
+		elif metric == 'position':
+			for i in range(len(input_data)):
+				pool = mp.Pool(mp.cpu_count())
+
+				result_objects = [pool.apply_async(skeleton.update_posture, args=(data, True, i)) for i, data in enumerate(output_data)]
+				output_position = [r.get() for r in result_objects]
+
+				pool.close()
+				pool.join()
+
+			score = np.sqrt(np.square(input_position - output_position).mean())
+
+		return score
 
 
 
