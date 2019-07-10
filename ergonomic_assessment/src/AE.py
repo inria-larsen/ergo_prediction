@@ -256,7 +256,7 @@ class ModelAutoencoder():
 
 			if len(list_loss) > 500:
 				del list_loss[0]
-				if np.std(list_loss) < 0.0001:
+				if np.std(list_loss) < 0.001:
 					return loss_score
 
 		return loss_score
