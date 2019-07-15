@@ -1,7 +1,6 @@
 from ErgoAssessment import ErgoAssessment
 from HumanPosture import HumanPosture
 from Skeleton import Skeleton
-from xsens_parser import mvnx_tree
 import AE
 from sklearn import preprocessing
 
@@ -9,24 +8,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 import json
 import pickle
-import pandas as pd
 import torch
 import torch.nn as nn
 import tools
-import random
 
 import os
 import argparse
 import configparser
 
-import visualization_tools as vtools
-from copy import deepcopy
-
 from matplotlib.pyplot import cm
 import matplotlib.patches as mpatches
-
-import torchvision.transforms.functional as TF
-import multiprocessing as mp
 
 if __name__ == '__main__':
 	local_path = os.path.dirname(os.path.abspath(__file__))
@@ -36,23 +27,36 @@ if __name__ == '__main__':
 
 	list_metric = autoencoder.get_list_metric()
 
-	size_list = [1, 2, 5, 10, 20, 30, 45, 66]
+	size_list = [2, 3, 5, 7, 10]
 	loss = []
 
 	all_data_test = autoencoder.get_data_test()
 
-	for metric in list_metric:
-		test_data = autoencoder.prepare_data(metric, all_data_test)
+	metric = 'jointAngle'
 
-		for i, size in enumerate(size_list):
-			autoencoder.change_config('latent_variable_dim', size)
+	for i, size in enumerate(size_list):
+		path = local_path + "/save/AE/" + metric + '/' + str(size) + '/'
+
+		count = 1
+		# while os.path.isdir(path):
+		# 	count += 1
+		# 	path += str(count) + '/'
+		if not(os.path.isdir(path)):
+			os.mkdir(path)
+
+		for k in range(10):
+			autoencoder.change_config('latent_dim', size)
 			loss = autoencoder.train_model(list_metric=list_metric)
 			# score_metric = autoencoder.test_model(list_metric=list_metric)
-			path = local_path + "/save/" + metric + "/"
-			if not os.path.exists(path):
-				os.mkdir(path)
-			pickle.dump(autoencoder, open(path + "autoencoder_" + str(size) + ".pkl", "wb" ) )
-			pickle.dump(loss, open(path + "loss_" + str(size) + ".pkl", "wb" ) )
+				
+			pickle.dump(autoencoder, open(path + "autoencoder_" + str(size) + '_' + str(k) + ".pkl", "wb" ))
+			pickle.dump(loss, open(path + "loss_" + str(size) + '_' + str(k) + ".pkl", "wb" ))
+
+
+
+
+
+
 
 	# for metric in list_metric:
 

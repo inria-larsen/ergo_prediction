@@ -20,12 +20,6 @@ import visualization_tools as vtools
 import multiprocessing as mp
 
 
-
-
-# def compute_loss_function(input_data, output_data):
-# 		loss_score[metric].append(np.sqrt(np.square(input_data - output_data).mean()))
-# 		return loss
-
 class AutoEncoderSimple(nn.Module):
 	def __init__(self, input_dim, latent_variable_dim, output_dim):
 		super(AutoEncoderSimple, self).__init__()
@@ -43,18 +37,16 @@ class AutoEncoder(nn.Module):
 		super(AutoEncoder, self).__init__()
 
 		self.encoder = nn.Sequential(
-			nn.Linear(input_dim, hidden_dim)
-			,
-			nn.ReLU(True),
+			nn.Linear(input_dim, hidden_dim),
+			nn.Sigmoid(),
 			nn.Linear(hidden_dim, latent_variable_dim),
-			nn.ReLU(True)
+			nn.Sigmoid()
 			)
 		self.decoder = nn.Sequential(
-			nn.Linear(latent_variable_dim, hidden_dim)
-			,
-			nn.ReLU(True),
+			nn.Linear(latent_variable_dim, hidden_dim),
+			nn.Sigmoid(),
 			nn.Linear(hidden_dim, output_dim),
-			nn.ReLU(True)
+			nn.Sigmoid()
 			)
 
 	def forward(self, x):
@@ -96,9 +88,7 @@ class VariationalAutoencoder(nn.Module):
 
 
 class ModelAutoencoder():
-	"""
 
-	"""
 	def __init__(self, parser, path_data = ""):
 		parser.add_argument('--file', '-f', help='Configuration file', default="config/config_AE.json")
 		parser.add_argument('--config', '-c', help='Configuration type', default="DEFAULT")
@@ -175,40 +165,46 @@ class ModelAutoencoder():
 		for data_joint in self.seq_data_train:
 			for d_joint in data_joint:
 				self.data_train.append(d_joint)
+		self.data_train = np.asarray(self.data_train)
 
 		for data_joint in self.seq_data_test:
 			for d_joint in data_joint:
 				self.data_test.append(d_joint)
+		self.data_test = np.asarray(self.data_test)
 
-		x_norm, self.input_mean, self.input_var = tools.standardization(self.data_train)
+		# x_norm, self.input_mean, self.input_var = tools.standardization(self.data_train)
+
+		size_data, self.input_dim = np.shape(self.data_train)
+		self.data_min = np.ones((self.input_dim, 1))*(-np.pi)
+		self.data_max = np.ones((self.input_dim, 1))*np.pi
+
+		x_norm = tools.normalization(self.data_train, self.data_min, self.data_max)
 		self.train_loader = torch.from_numpy(x_norm)
 
 		if self.output_type == 'ergo':
 			self.data_ergo = self.prepare_data('ergo_score', self.data_train)
 			
-
 			x_ergo, self.loss_data_min, self.loss_data_max = tools.normalization(self.data_ergo)
 
 			self.data_loss = torch.from_numpy(x_ergo)
 			# data_ergo2 = tools.denormalization(x_ergo, self.loss_data_min, self.loss_data_max)
 
-
 		elif self.output_type == 'ergo_posture':
 			self.data_ergo = self.prepare_data('ergo_score', self.data_train)
 			x_ergo, self.loss_data_mean, self.loss_data_var = tools.standardization(self.data_ergo)
-			self.data_loss = torch.from_numpy(x_ergo)
+
+			data_combine = np.concatenate((x_norm, x_ergo), axis=1)
+			self.loss_data_mean = np.concatenate((self.input_mean, self.loss_data_mean), axis=0)
+			self.loss_data_var = np.concatenate((self.input_var, self.loss_data_var), axis=0)
+
+			self.data_loss = torch.from_numpy(data_combine)
 
 		else:
 			self.data_loss = torch.from_numpy(x_norm)
+			self.loss_data_min = self.data_min
+			self.loss_data_max = self.data_max
 
-		x_joint = np.asarray(self.data_test)
-		x_norm = np.copy(x_joint)
-		x_joint = x_joint.astype(np.float32)
-		size_data, self.input_dim = np.shape(x_joint)
-		for i in range(self.input_dim):
-			x_norm[:,i] = (x_joint[:,i] - self.input_mean[i])/self.input_var[i]
-		x_norm = x_norm.astype(np.float32)
-
+		x_norm = tools.normalization(self.data_test, self.data_min, self.data_max)
 		self.test_loader = torch.from_numpy(x_norm)
 
 	def train_model(self, nbr_epoch = 100, list_metric = ['jointAngle']):
@@ -225,8 +221,9 @@ class ModelAutoencoder():
 			input_data = tools.denormalization(input_data, self.loss_data_min, self.loss_data_max)
 
 		else:
-			for i in range(self.output_dim):
-				input_data[:,i] = np.asarray(input_data[:,i]*self.loss_data_var[i] + self.loss_data_mean[i])
+			input_data = tools.denormalization(input_data, self.loss_data_min, self.loss_data_max)
+			# for i in range(self.output_dim):
+			# 	input_data[:,i] = np.asarray(input_data[:,i]*self.loss_data_var[i] + self.loss_data_mean[i])
 
 		list_loss = []
 		for epoch in range(self.nbr_epoch):
@@ -244,15 +241,25 @@ class ModelAutoencoder():
 			if self.output_type == 'ergo':
 				output_data = tools.denormalization(output_data, self.loss_data_min, self.loss_data_max)
 
-			else:
+			elif self.output_type == 'ergo_posture':
 				for i in range(self.output_dim):
-					output_data[:,i] = np.asarray(output_data[:,i]*self.loss_data_var[i] + self.loss_data_mean[i])	
-	
+					output_data[:,i] = np.asarray(output_data[:,i]*self.loss_data_var[i] + self.loss_data_mean[i])
+
+				score1 = self.evaluate_model(input_data[0:66], output_data[0:66], 'jointAngle')
+				score2 = self.evaluate_model(input_data[66:], output_data[66:], '')
+
+			else:
+				output_data = tools.denormalization(output_data, self.loss_data_min, self.loss_data_max)
+				# for i in range(self.output_dim):
+				# 	output_data[:,i] = np.asarray(output_data[:,i]*self.loss_data_var[i] + self.loss_data_mean[i])
+
+			score = self.evaluate_model(input_data, output_data, list_metric[0])
+
 			loss_score.append(np.sqrt(np.square(input_data - output_data).mean()))
-			
+
 			list_loss.append(loss_score[epoch]) 
 			if epoch%100 == 0:
-				print('Epoch: ', epoch, '| train loss: %.4f' % loss.data.numpy())
+				print('Epoch: ', epoch, '| train loss:', loss.data.numpy(), score)
 
 			if len(list_loss) > 500:
 				del list_loss[0]
@@ -261,9 +268,25 @@ class ModelAutoencoder():
 
 		return loss_score
 
-	def test_model(self, metric = ''):
-		b_x = self.test_loader.view(-1, self.input_dim)
-		b_y = self.test_loader.view(-1, self.input_dim)
+	def test_model(self, data = [], metric = ''):
+		self.input_mean = self.mean_norm
+		self.input_var = self.var_norm
+
+		if len(data) == 0:
+			b_x = self.test_loader.view(-1, self.input_dim)
+			b_y = self.test_loader.view(-1, self.input_dim)
+
+		else:
+			data = np.asarray(data)
+			data_norm = np.copy(data)
+			data = data.astype(np.float32)
+			size_data, self.input_dim = np.shape(data)
+			for i in range(self.input_dim):
+				data_norm[:,i] = (data[:,i] - self.input_mean[i])/self.input_var[i]
+			data_norm = data_norm.astype(np.float32)
+
+			b_x = torch.from_numpy(data_norm)
+			b_y = torch.from_numpy(data_norm)
 
 		input_data = np.copy(b_x.detach().numpy())
 
@@ -274,11 +297,9 @@ class ModelAutoencoder():
 		for i in range(self.input_dim):
 			decoded_joint[:,i] = decoded_joint[:,i]*self.input_var[i] + self.input_mean[i]
 
-		if metric == '':
-			return decoded_joint
-		else:
-			score = self.evaluate_model()
-			return decoded_joint, score
+		score = self.evaluate_model(input_data, decoded_joint, metric)
+	
+		return decoded_joint, score
 
 
 	def get_data_train(self):
@@ -322,13 +343,13 @@ class ModelAutoencoder():
 
 
 	def evaluate_model(self, input_data, output_data, metric):
-		list_ergo_score = self.ergo_assessment.get_list_score_name()
 		if metric == 'jointAngle':
 			input_joint = np.rad2deg(input_data)
 			output_joint = np.rad2deg(output_data)
 			score = np.sqrt(np.square(input_joint - output_joint).mean())
 
 		elif metric == 'ergo_score':
+			list_ergo_score = self.ergo_assessment.get_list_score_name()
 			pool = mp.Pool(mp.cpu_count())
 
 			result_objects = [pool.apply_async(tools.compute_sequence_ergo, args=(data, i, list_ergo_score)) for i, data in enumerate(output_data)]
@@ -366,6 +387,8 @@ class ModelAutoencoder():
 
 			score = np.sqrt(np.square(input_position - output_position).mean())
 
+		else:
+			score = np.sqrt(np.square(input_data - output_data).mean())
 		return score
 
 
