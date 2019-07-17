@@ -23,6 +23,8 @@ if __name__ == '__main__':
 	local_path = os.path.dirname(os.path.abspath(__file__))
 	# Get arguments
 	parser=argparse.ArgumentParser()
+	parser.add_argument('--file', '-f', help='Configuration file', default="config/config_AE.json")
+	parser.add_argument('--config', '-c', help='Configuration type', default="DEFAULT")
 
 	loss = []
 
@@ -31,6 +33,7 @@ if __name__ == '__main__':
 	nbr_iterations = 10
 
 	for k in range(nbr_iterations):
+		print(local_path)
 		autoencoder = AE.ModelAutoencoder(parser, local_path)
 		list_metric = autoencoder.get_list_metric()
 
@@ -48,6 +51,8 @@ if __name__ == '__main__':
 			
 		pickle.dump(autoencoder, open(path + "autoencoder_" + str(size_latent) + '_' + str(k) + ".pkl", "wb" ))
 		pickle.dump(loss, open(path + "loss_" + str(size_latent) + '_' + str(k) + ".pkl", "wb" ))
+
+		del autoencoder
 
 
 

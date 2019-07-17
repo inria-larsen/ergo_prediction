@@ -90,8 +90,6 @@ class VariationalAutoencoder(nn.Module):
 class ModelAutoencoder():
 
 	def __init__(self, parser, path_data = ""):
-		parser.add_argument('--file', '-f', help='Configuration file', default="config/config_AE.json")
-		parser.add_argument('--config', '-c', help='Configuration type', default="DEFAULT")
 		args=parser.parse_args()
 		config_file = args.file
 		config_type = args.config
