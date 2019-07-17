@@ -222,8 +222,6 @@ class ModelAutoencoder():
 
 		else:
 			input_data = tools.denormalization(input_data, self.loss_data_min, self.loss_data_max)
-			# for i in range(self.output_dim):
-			# 	input_data[:,i] = np.asarray(input_data[:,i]*self.loss_data_var[i] + self.loss_data_mean[i])
 
 		list_loss = []
 		for epoch in range(self.nbr_epoch):
@@ -250,8 +248,6 @@ class ModelAutoencoder():
 
 			else:
 				output_data = tools.denormalization(output_data, self.loss_data_min, self.loss_data_max)
-				# for i in range(self.output_dim):
-				# 	output_data[:,i] = np.asarray(output_data[:,i]*self.loss_data_var[i] + self.loss_data_mean[i])
 
 			score = self.evaluate_model(input_data, output_data, list_metric[0])
 
@@ -269,21 +265,21 @@ class ModelAutoencoder():
 		return loss_score
 
 	def test_model(self, data = [], metric = ''):
-		self.input_mean = self.mean_norm
-		self.input_var = self.var_norm
 
 		if len(data) == 0:
 			b_x = self.test_loader.view(-1, self.input_dim)
 			b_y = self.test_loader.view(-1, self.input_dim)
 
 		else:
-			data = np.asarray(data)
-			data_norm = np.copy(data)
-			data = data.astype(np.float32)
-			size_data, self.input_dim = np.shape(data)
-			for i in range(self.input_dim):
-				data_norm[:,i] = (data[:,i] - self.input_mean[i])/self.input_var[i]
-			data_norm = data_norm.astype(np.float32)
+			data_norm = tools.normalization(data, self.data_min, self.data_max)
+			# data = np.asarray(data)
+			# data_norm = np.copy(data)
+			# data = data.astype(np.float32)
+			# size_data, self.input_dim = np.shape(data)
+
+			# for i in range(self.input_dim):
+			# 	data_norm[:,i] = (data[:,i] - self.input_mean[i])/self.input_var[i]
+			# data_norm = data_norm.astype(np.float32)
 
 			b_x = torch.from_numpy(data_norm)
 			b_y = torch.from_numpy(data_norm)
@@ -294,12 +290,14 @@ class ModelAutoencoder():
 
 		decoded_joint = decoded.detach().numpy()
 
-		for i in range(self.input_dim):
-			decoded_joint[:,i] = decoded_joint[:,i]*self.input_var[i] + self.input_mean[i]
+		decoded_joint = tools.denormalization(decoded_joint, self.loss_data_min, self.loss_data_max)
+
+		# for i in range(self.input_dim):
+		# 	decoded_joint[:,i] = decoded_joint[:,i]*self.input_var[i] + self.input_mean[i]
 
 		score = self.evaluate_model(input_data, decoded_joint, metric)
 	
-		return decoded_joint, score
+		return decoded_joint, encoded.detach().numpy(), score
 
 
 	def get_data_train(self):
@@ -310,6 +308,9 @@ class ModelAutoencoder():
 
 	def get_list_metric(self):
 		return self.list_metric
+
+	def get_config(self):
+		return self.config
 
 	def prepare_data(self, metric, input_data):
 		if metric == 'position':

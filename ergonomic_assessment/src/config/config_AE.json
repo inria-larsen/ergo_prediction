@@ -22,8 +22,107 @@
 		"list_metric": ["jointAngle"]
 	},
 
-	"AE_hidden":{
+	"AE_simple_2":{
+		"latent_dim":   2,
+		"hidden_dim": 100,
+		"output_type": "joint",
+		"epoch":  5000,
+		"ratio_split_sets": [70, 30, 0],
+		"type_AE": "AE_simple",
+		"input_type": "jointAngle",
+		"list_metric": ["jointAngle"]
+	},
+
+	"AE_simple_3":{
+		"latent_dim":   3,
+		"hidden_dim": 100,
+		"output_type": "joint",
+		"epoch":  5000,
+		"ratio_split_sets": [70, 30, 0],
+		"type_AE": "AE_simple",
+		"input_type": "jointAngle",
+		"list_metric": ["jointAngle"]
+	},
+
+	"AE_simple_5":{
+		"latent_dim":   5,
+		"hidden_dim": 100,
+		"output_type": "joint",
+		"epoch":  5000,
+		"ratio_split_sets": [70, 30, 0],
+		"type_AE": "AE_simple",
+		"input_type": "jointAngle",
+		"list_metric": ["jointAngle"]
+	},
+
+	"AE_simple_7":{
+		"latent_dim":   7,
+		"hidden_dim": 100,
+		"output_type": "joint",
+		"epoch":  5000,
+		"ratio_split_sets": [70, 30, 0],
+		"type_AE": "AE_simple",
+		"input_type": "jointAngle",
+		"list_metric": ["jointAngle"]
+	},
+
+	"AE_simple_10":{
 		"latent_dim":   10,
+		"hidden_dim": 100,
+		"output_type": "joint",
+		"epoch":  5000,
+		"ratio_split_sets": [70, 30, 0],
+		"type_AE": "AE_simple",
+		"input_type": "jointAngle",
+		"list_metric": ["jointAngle"]
+	},
+
+	"AE_hidden_2":{
+		"latent_dim":   2,
+		"hidden_dim": 100,
+		"output_type": "joint",
+		"epoch":  5000,
+		"ratio_split_sets": [70, 30, 0],
+		"type_AE": "AE",
+		"input_type": "jointAngle",
+		"list_metric": ["jointAngle"]
+	},
+
+	"AE_hidden_3":{
+		"latent_dim":   3,
+		"hidden_dim": 100,
+		"output_type": "joint",
+		"epoch":  5000,
+		"ratio_split_sets": [70, 30, 0],
+		"type_AE": "AE",
+		"input_type": "jointAngle",
+		"list_metric": ["jointAngle"]
+	},
+
+	"AE_hidden_5":{
+		"latent_dim":   5,
+		"hidden_dim": 100,
+		"output_type": "joint",
+		"epoch":  5000,
+		"ratio_split_sets": [70, 30, 0],
+		"type_AE": "AE",
+		"input_type": "jointAngle",
+		"list_metric": ["jointAngle"]
+	},
+
+	"AE_hidden_7":{
+		"latent_dim":   7,
+		"hidden_dim": 100,
+		"output_type": "joint",
+		"epoch":  5000,
+		"ratio_split_sets": [70, 30, 0],
+		"type_AE": "AE",
+		"input_type": "jointAngle",
+		"list_metric": ["jointAngle"]
+	},
+
+	"AE_hidden_10":{
+		"latent_dim": 10,
 		"hidden_dim": 100,
 		"output_type": "joint",
 		"epoch":  5000,
