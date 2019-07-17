@@ -28,7 +28,7 @@ if __name__ == '__main__':
 
 	metric = 'jointAngle'
 
-	nbr_iterations = 1
+	nbr_iterations = 10
 
 	for k in range(nbr_iterations):
 		autoencoder = AE.ModelAutoencoder(parser, local_path)
