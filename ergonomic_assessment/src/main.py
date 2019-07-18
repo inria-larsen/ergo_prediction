@@ -33,13 +33,13 @@ if __name__ == '__main__':
 	nbr_iterations = 10
 
 	for k in range(nbr_iterations):
-		print(local_path)
 		autoencoder = AE.ModelAutoencoder(parser, local_path)
 		list_metric = autoencoder.get_list_metric()
 
 		size_latent = autoencoder.get_config()['latent_dim']
+		type_AE = autoencoder.get_config()['type_AE']
 
-		path = local_path + "/save/AE/" + metric + '/' + str(size_latent) + '/'
+		path = local_path + "/save/" + type_AE + "/" + metric + '/' + str(size_latent) + '/'
 		if not(os.path.isdir(path)):
 			os.mkdir(path)
 
