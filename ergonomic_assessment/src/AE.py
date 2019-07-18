@@ -121,6 +121,7 @@ class ModelAutoencoder():
 		self.latent_dim = self.config["latent_dim"]
 		self.hidden_dim = self.config["hidden_dim"]
 		self.type_AE = self.config["type_AE"]
+		self.stop_criterion = self.config["stop_criterion"]
 
 		if self.output_type == 'ergo':
 			self.ergo_assessment = ErgoAssessment('config/rula_config.json')
@@ -251,13 +252,13 @@ class ModelAutoencoder():
 
 			loss_score.append(np.sqrt(np.square(input_data - output_data).mean()))
 
-			list_loss.append(loss_score[epoch]) 
+			list_loss.append(score) 
 			if epoch%100 == 0:
 				print('Epoch: ', epoch, '| train loss:', loss.data.numpy(), score)
 
 			if len(list_loss) > 500:
 				del list_loss[0]
-				if np.std(list_loss) < 0.001:
+				if np.std(list_loss) < self.stop_criterion:
 					return loss_score
 
 		return loss_score
