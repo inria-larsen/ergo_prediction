@@ -108,8 +108,7 @@ class ModelAutoencoder():
 		self.config = param_init[config_type]
 		
 		self.BATCH_SIZE = 64
-		self.LR = 0.005		 # learning rate
-		self.N_TEST_IMG = 5
+		self.LR = 0.0005		 # learning rate
 		self.tracks = ['details']
 		self.ratio_split = self.config["ratio_split_sets"]
 		self.input_type = self.config["input_type"]
@@ -250,7 +249,8 @@ class ModelAutoencoder():
 
 			score = self.evaluate_model(input_data, output_data, list_metric[0])
 
-			loss_score.append(np.sqrt(np.square(input_data - output_data).mean()))
+			# loss_score.append(np.sqrt(np.square(input_data - output_data).mean()))
+			loss_score.append(score)
 
 			list_loss.append(score) 
 			if epoch%100 == 0:
@@ -259,6 +259,7 @@ class ModelAutoencoder():
 			if len(list_loss) > 500:
 				del list_loss[0]
 				if np.std(list_loss) < self.stop_criterion:
+					print(np.std(list_loss))
 					return loss_score
 
 		return loss_score

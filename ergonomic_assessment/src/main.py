@@ -42,15 +42,16 @@ if __name__ == '__main__':
 		path = local_path + "/save/" + type_AE + "/" + metric + '/' + str(size_latent) + '/'
 		if not(os.path.isdir(path)):
 			os.mkdir(path)
+		if not(os.path.isdir(path + 'loss/')):
+			os.mkdir(path + 'loss/')
 
 		loss = autoencoder.train_model(list_metric=list_metric)
-
 		all_data_test = autoencoder.get_data_test()
 
 		# score_metric = autoencoder.test_model(list_metric=list_metric)
 			
 		pickle.dump(autoencoder, open(path + "autoencoder_" + str(size_latent) + '_' + str(k) + ".pkl", "wb" ))
-		pickle.dump(loss, open(path + "loss_" + str(size_latent) + '_' + str(k) + ".pkl", "wb" ))
+		pickle.dump(loss, open(path + 'loss/' + "loss_" + str(size_latent) + '_' + str(k) + ".pkl", "wb" ))
 
 		del autoencoder
 
