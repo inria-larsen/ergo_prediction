@@ -38,7 +38,7 @@ class HumanPosture():
 			for dim in self.mapping_joints[joint]['mapping']:
 				self.list_all_joints.append(joint + '_' + dim)
 				self.reduced_dof += 1
-		self.list_all_joints.sort()
+		self.list_all_joints.sort()	
 
 	def update_posture(self, input_joints, num_frame=0):
 		if(type(input_joints) == np.ndarray):
@@ -64,7 +64,6 @@ class HumanPosture():
 			 	dim = self.dimensions[dim_joint]
 			 	self.joint_reduce_body[num_joint] += self.joints_whole_body[id_joint*3+dim]
 
-
 	def set_posture(self, joints_dict):
 		self.joints_whole_body = np.zeros(self.input_dof)
 		count = 0
@@ -74,6 +73,9 @@ class HumanPosture():
 				count += 1
 
 		self.mapping_posture()
+
+	def set_posture(self, joint_data):
+		self.joint_reduce_body = joint_data
 
 	def get_id_input_joint(self, name_joint):
 		id_joint = self.input_joints.index(name_joint)
@@ -86,6 +88,12 @@ class HumanPosture():
 	def get_joint_angle(self, name_joint):
 		id_joint = self.list_all_joints.index(name_joint)
 		return self.joint_reduce_body[id_joint]
+
+	def get_dim_input(self):
+		return self.input_dof
+
+	def get_dim_reduce(self):
+		return self.reduced_dof
 
 	def visualise_from_joints(self, ax):
 		"""

@@ -1,14 +1,14 @@
 {
 	"path_data": "/database/win_size250/",
 	"DEFAULT":{
-		"latent_dim": 2,
+		"latent_dim": 15,
 		"hidden_dim": 100,
-		"output_type": "posture",
+		"output_type": "ergo_posture",
 		"epoch":  10000,
-		"ratio_split_sets": [70, 29, 1],
+		"ratio_split_sets": [1, 1, 1],
 		"type_AE": "AE_simple",
 		"input_type": "jointAngle",
-		"list_metric": ["posture"],
+		"list_metric": ["combine"],
 		"stop_criterion": 0.01
 	},
 
@@ -17,7 +17,7 @@
 		"hidden_dim": 100,
 		"output_type": "joint",
 		"epoch":  5000,
-		"ratio_split_sets": [70, 30, 0],
+		"ratio_split_sets": [1, 1, 98],
 		"type_AE": "AE_simple",
 		"input_type": "jointAngle",
 		"list_metric": ["jointAngle"],
@@ -187,17 +187,6 @@
 		"list_metric": ["ergo_score"]
 	},
 
-	"combine_ergo_posture":{
-		"latent_dim":   10,
-		"hidden_dim": 10,
-		"output_type": "ergo_posture",
-		"epoch":  5000,
-		"ratio_split_sets": [1, 30, 0],
-		"type_AE": "AE_simple",
-		"input_type": "jointAngle",
-		"list_metric": ["combine"]
-	},
-
 	"AE_simple_posture_2":{
 		"latent_dim":   2,
 		"hidden_dim": 100,
@@ -263,7 +252,7 @@
 		"hidden_dim": 100,
 		"output_type": "posture",
 		"epoch":  10000,
-		"ratio_split_sets": [70, 30, 0],
+		"ratio_split_sets": [1, 1, 98],
 		"type_AE": "AE",
 		"input_type": "jointAngle",
 		"list_metric": ["posture"],
@@ -316,5 +305,129 @@
 		"input_type": "jointAngle",
 		"list_metric": ["posture"],
 		"stop_criterion": 0.01
-	}
+	},
+
+	"AE_combine_2":{
+		"latent_dim": 2,
+		"hidden_dim": 100,
+		"output_type": "ergo_posture",
+		"epoch":  10000,
+		"ratio_split_sets": [70, 30, 0],
+		"type_AE": "AE",
+		"input_type": "jointAngle",
+		"list_metric": ["combine"],
+		"stop_criterion": 0.01
+	},
+
+	"AE_combine_3":{
+		"latent_dim": 3,
+		"hidden_dim": 100,
+		"output_type": "ergo_posture",
+		"epoch":  10000,
+		"ratio_split_sets": [70, 30, 0],
+		"type_AE": "AE",
+		"input_type": "jointAngle",
+		"list_metric": ["combine"],
+		"stop_criterion": 0.01
+	},
+
+	"AE_combine_5":{
+		"latent_dim": 5,
+		"hidden_dim": 100,
+		"output_type": "ergo_posture",
+		"epoch":  10000,
+		"ratio_split_sets": [70, 30, 0],
+		"type_AE": "AE",
+		"input_type": "jointAngle",
+		"list_metric": ["combine"],
+		"stop_criterion": 0.01
+	},
+
+	"AE_combine_7":{
+		"latent_dim": 7,
+		"hidden_dim": 100,
+		"output_type": "ergo_posture",
+		"epoch":  10000,
+		"ratio_split_sets": [70, 30, 0],
+		"type_AE": "AE",
+		"input_type": "jointAngle",
+		"list_metric": ["combine"],
+		"stop_criterion": 0.01
+	},
+
+	"AE_combine_10":{
+		"latent_dim": 10,
+		"hidden_dim": 100,
+		"output_type": "ergo_posture",
+		"epoch":  10000,
+		"ratio_split_sets": [70, 30, 0],
+		"type_AE": "AE",
+		"input_type": "jointAngle",
+		"list_metric": ["combine"],
+		"stop_criterion": 0.01
+	},
+
+	"AE_simple_combine_2":{
+		"latent_dim": 2,
+		"hidden_dim": 100,
+		"output_type": "ergo_posture",
+		"epoch":  10000,
+		"ratio_split_sets": [70, 30, 0],
+		"type_AE": "AE_simple",
+		"input_type": "jointAngle",
+		"list_metric": ["combine"],
+		"stop_criterion": 0.01
+	},
+
+	"AE_simple_combine_3":{
+		"latent_dim": 3,
+		"hidden_dim": 100,
+		"output_type": "ergo_posture",
+		"epoch":  10000,
+		"ratio_split_sets": [70, 30, 0],
+		"type_AE": "AE_simple",
+		"input_type": "jointAngle",
+		"list_metric": ["combine"],
+		"stop_criterion": 0.01
+	},
+
+	"AE_simple_combine_5":{
+		"latent_dim": 5,
+		"hidden_dim": 100,
+		"output_type": "ergo_posture",
+		"epoch":  10000,
+		"ratio_split_sets": [70, 30, 0],
+		"type_AE": "AE_simple",
+		"input_type": "jointAngle",
+		"list_metric": ["combine"],
+		"stop_criterion": 0.01
+	},
+
+
+	"AE_simple_combine_7":{
+		"latent_dim": 7,
+		"hidden_dim": 100,
+		"output_type": "ergo_posture",
+		"epoch":  10000,
+		"ratio_split_sets": [70, 30, 0],
+		"type_AE": "AE_simple",
+		"input_type": "jointAngle",
+		"list_metric": ["combine"],
+		"stop_criterion": 0.01
+	},
+
+	"AE_simple_combine_10":{
+		"latent_dim": 10,
+		"hidden_dim": 100,
+		"output_type": "ergo_posture",
+		"epoch":  10000,
+		"ratio_split_sets": [70, 30, 0],
+		"type_AE": "AE_simple",
+		"input_type": "jointAngle",
+		"list_metric": ["combine"],
+		"stop_criterion": 0.01
+	},
+
+
+
 }
