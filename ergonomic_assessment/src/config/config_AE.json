@@ -308,7 +308,7 @@
 
 	"AE_posture_10":{
 		"latent_dim":   10,
-		"hidden_dim": 0,
+		"hidden_dim": 100,
 		"output_type": "posture",
 		"epoch":  10000,
 		"ratio_split_sets": [70, 30, 0],
