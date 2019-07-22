@@ -28,13 +28,12 @@ if __name__ == '__main__':
 
 	loss = []
 
-	metric = 'jointAngle'
-
 	nbr_iterations = 10
 
 	for k in range(nbr_iterations):
 		autoencoder = AE.ModelAutoencoder(parser, local_path)
 		list_metric = autoencoder.get_list_metric()
+		metric = list_metric[0]
 
 		size_latent = autoencoder.get_config()['latent_dim']
 		type_AE = autoencoder.get_config()['type_AE']
