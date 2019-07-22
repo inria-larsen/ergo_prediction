@@ -122,11 +122,9 @@ class ModelAutoencoder():
 		self.type_AE = self.config["type_AE"]
 		self.stop_criterion = self.config["stop_criterion"]
 
-		if self.output_type == 'ergo':
-			self.ergo_assessment = ErgoAssessment('config/rula_config.json')
-			self.list_ergo_score = self.ergo_assessment.get_list_score_name()
-			self.list_ergo_score.sort()
-			self.output_dim = len(self.list_ergo_score)
+		if 'ergo_score' in self.list_metric:
+			# self.output_dim = len(self.list_ergo_score)
+			self.output_dim = self.input_dim
 
 		elif self.output_type == 'ergo_posture':
 			self.ergo_assessment = ErgoAssessment('config/rula_config.json')
@@ -155,7 +153,7 @@ class ModelAutoencoder():
 		self.list_features, self.data_np, self.real_labels, self.timestamps, list_states = tools.load_data(path, self.tracks, self.input_type + '_')
 		self.list_states = list_states[0]
 
-		self.seq_data_train, seq_labels_train, self.seq_data_test, seq_labels_test, seq_id_train, seq_id_test = tools.split_data_base(self.data_np, self.real_labels[0], self.ratio_split)
+		self.seq_data_train, seq_labels_train, self.seq_data_test, seq_labels_test, val_set, label_val, seq_id_train, seq_id_test, val_id = tools.split_data_base(self.data_np, self.real_labels[0], self.ratio_split)
 
 		self.data_train = []
 		self.data_test = []
@@ -172,6 +170,10 @@ class ModelAutoencoder():
 
 		# x_norm, self.input_mean, self.input_var = tools.standardization(self.data_train)
 
+		if 'posture' in self.list_metric:
+			self.data_train = self.prepare_data('posture', self.data_train)
+			self.data_test = self.prepare_data('posture', self.data_test)
+
 		size_data, self.input_dim = np.shape(self.data_train)
 		self.data_min = np.ones((self.input_dim, 1))*(-np.pi)
 		self.data_max = np.ones((self.input_dim, 1))*np.pi
@@ -179,10 +181,14 @@ class ModelAutoencoder():
 		x_norm = tools.normalization(self.data_train, self.data_min, self.data_max)
 		self.train_loader = torch.from_numpy(x_norm)
 
-		if self.output_type == 'ergo':
+		if 'ergo_score' in self.list_metric:
 			self.data_ergo = self.prepare_data('ergo_score', self.data_train)
-			
-			x_ergo, self.loss_data_min, self.loss_data_max = tools.normalization(self.data_ergo)
+			self.dim_loss = len(self.list_ergo_score)
+
+			self.loss_data_min = np.zeros((self.dim_loss, 1))
+			self.loss_data_max = np.ones((self.dim_loss, 1))*7
+
+			x_ergo = tools.normalization(self.data_ergo, self.loss_data_min, self.loss_data_max)
 
 			self.data_loss = torch.from_numpy(x_ergo)
 			# data_ergo2 = tools.denormalization(x_ergo, self.loss_data_min, self.loss_data_max)
@@ -201,6 +207,7 @@ class ModelAutoencoder():
 			self.data_loss = torch.from_numpy(x_norm)
 			self.loss_data_min = self.data_min
 			self.loss_data_max = self.data_max
+			self.dim_loss = len(self.data_min)
 
 		x_norm = tools.normalization(self.data_test, self.data_min, self.data_max)
 		self.test_loader = torch.from_numpy(x_norm)
@@ -211,20 +218,18 @@ class ModelAutoencoder():
 		skeleton = Skeleton('dhm66_ISB_Xsens.urdf')
 
 		b_x = self.train_loader.view(-1, self.input_dim)
-		b_y = self.data_loss.view(-1, self.output_dim)
+		b_y = self.data_loss.view(-1, self.dim_loss)
 
 		input_data = np.copy(b_y.detach().numpy())
-
-		if self.output_type == 'ergo':
-			input_data = tools.denormalization(input_data, self.loss_data_min, self.loss_data_max)
-
-		else:
-			input_data = tools.denormalization(input_data, self.loss_data_min, self.loss_data_max)
+		input_data = tools.denormalization(input_data, self.loss_data_min, self.loss_data_max)
 
 		list_loss = []
 		for epoch in range(self.nbr_epoch):
 
 			encoded, decoded = self.autoencoder(b_x)
+
+			# if 'ergo_score' in self.list_metric:
+			# 	data_eval = self.prepare_data('ergo_score', decoded)
 
 			loss = self.loss_func(decoded, b_y)	  # mean square error
 
@@ -313,38 +318,56 @@ class ModelAutoencoder():
 		return self.config
 
 	def prepare_data(self, metric, input_data):
-		if metric == 'position':
+		if metric == 'posture':
+			human_pose = HumanPosture('config/mapping_joints.json')
+			pool = mp.Pool(mp.cpu_count())
+			result_objects = [pool.apply_async(human_pose.update_posture, args=(data, i)) for i, data in enumerate(input_data)]
+			data_eval = np.asarray([r.get() for r in result_objects])
+
+			pool.close()
+			pool.join()
+
+		elif metric == 'position':
 			end_effectors = ['Right Hand', 'Left Hand', 'Right Foot', 'Left Foot']
 
 			pool = mp.Pool(mp.cpu_count())
 
 			result_objects = [pool.apply_async(skeleton.update_posture, args=(data, True, i)) for i, data in enumerate(input_data)]
-			self.data_eval = [r.get() for r in result_objects]
+			data_eval = [r.get() for r in result_objects]
 
 			pool.close()
 			pool.join()
 
 		elif metric == 'ergo_score':
 			self.ergo_assessment = ErgoAssessment('config/rula_config.json')
-			list_ergo_score = self.ergo_assessment.get_list_score_name()
+			self.list_ergo_score = self.ergo_assessment.get_list_score_name()
+			self.list_ergo_score.sort()
 
-			pool = mp.Pool(mp.cpu_count())
+			
+			if(type(input_data) == torch.Tensor):
 
-			result_objects = [pool.apply_async(tools.compute_sequence_ergo, args=(data, i, list_ergo_score)) for i, data in enumerate(input_data)]
-			self.data_eval = [r.get() for r in result_objects]
-			self.data_eval = np.asarray(self.data_eval)
+				for i, data in enumerate(input_data[0:1]):
+					data_eval = tools.compute_sequence_ergo(data, i, self.list_ergo_score)
 
-			pool.close()
-			pool.join()
+
+			elif(type(input_data) == np.ndarray):
+				pool = mp.Pool(mp.cpu_count())
+				
+				result_objects = [pool.apply_async(tools.compute_sequence_ergo, args=(data, i, self.list_ergo_score)) for i, data in enumerate(input_data)]
+				data_eval = [r.get() for r in result_objects]
+				data_eval = np.asarray(self.data_eval)
+
+				pool.close()
+				pool.join()
 
 		else:
-			self.data_eval = np.copy(input_data)
+			data_eval = np.copy(input_data)
 
-		return self.data_eval
+		return data_eval
 
 
 	def evaluate_model(self, input_data, output_data, metric):
-		if metric == 'jointAngle':
+		if metric in ['jointAngle', 'posture'] :
 			input_joint = np.rad2deg(input_data)
 			output_joint = np.rad2deg(output_data)
 			score = np.sqrt(np.square(input_joint - output_joint).mean())
@@ -353,7 +376,7 @@ class ModelAutoencoder():
 			list_ergo_score = self.ergo_assessment.get_list_score_name()
 			pool = mp.Pool(mp.cpu_count())
 
-			result_objects = [pool.apply_async(tools.compute_sequence_ergo, args=(data, i, list_ergo_score)) for i, data in enumerate(output_data)]
+			result_objects = [pool.apply_async(tools.compute_sequence_ergo, args=(data, i, list_ergo_score)) for i, data in enumerate(input_data)]
 			output_ergo = [r.get() for r in result_objects]
 
 			pool.close()

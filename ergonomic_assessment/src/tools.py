@@ -211,7 +211,7 @@ def split_data_base(data_set, labels, ratio):
 	if(ratio[2] > 0):
 
 		id_train, id_subset = train_test_split(np.arange(nbr_sequences), train_size=ratio[0]/100)
-		id_test, id_val = train_test_split(id_subset, train_size=(ratio[2]*100/(100-ratio[0]))/100)
+		id_test, id_val = train_test_split(id_subset, train_size=(ratio[1]*100/(100-ratio[0]))/100)
 
 		for i in id_train:
 			base_ref.append(data_set[i])
@@ -238,7 +238,7 @@ def split_data_base(data_set, labels, ratio):
 			base_test.append(data_set[i])
 			labels_test.append(labels[i])
 		
-		return base_ref, labels_ref, base_test, labels_test, id_train, id_test
+		return base_ref, labels_ref, base_test, labels_test, 'NONE', 'NONE', id_train, id_test, 'NONE'
 
 def quat2rot(q):
 	R = np.matrix([	[q[0]**2 + q[1]**2 - q[2]**2 - q[3]**2, 2*q[1]*q[2] - 2*q[0]*q[3], 2*q[0]*q[2] + 2*q[1]*q[3]],
@@ -297,6 +297,16 @@ def compute_sequence_ergo(data, num_frame, list_score):
 
 	human_posture.update_posture(data)
 	ergo_assessment.compute_ergo_scores(human_posture)
+	for score in list_score:
+		score_total.append(ergo_assessment[score])
+	return score_total
+
+def reduce_skeleton(data, num_frame, list_score):
+	score_total = []
+	human_posture = HumanPosture('config/mapping_joints.json')
+	ergo_assessment = ErgoAssessment('config/rula_config.json')
+
+	human_posture.update_posture(data)
 	for score in list_score:
 		score_total.append(ergo_assessment[score])
 	return score_total
