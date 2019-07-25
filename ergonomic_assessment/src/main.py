@@ -43,6 +43,8 @@ if __name__ == '__main__':
 			os.mkdir(path)
 		if not(os.path.isdir(path + 'loss/')):
 			os.mkdir(path + 'loss/')
+		if os.path.exists(path + "autoencoder_" + str(size_latent) + '_' + str(k) + ".pkl"):
+			continue
 
 		loss = autoencoder.train_model(list_metric=list_metric)
 		all_data_test = autoencoder.get_data_test()
