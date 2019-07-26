@@ -252,7 +252,7 @@
 		"hidden_dim": 100,
 		"output_type": "posture",
 		"epoch":  10000,
-		"ratio_split_sets": [1, 1, 98],
+		"ratio_split_sets": [70, 30, 0],
 		"type_AE": "AE",
 		"input_type": "jointAngle",
 		"list_metric": ["posture"],

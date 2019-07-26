@@ -24,8 +24,8 @@ class AutoEncoderSimple(nn.Module):
 	def __init__(self, input_dim, latent_variable_dim, output_dim):
 		super(AutoEncoderSimple, self).__init__()
 
-		self.encoder = nn.Sequential(nn.Linear(input_dim, latent_variable_dim))
-		self.decoder = nn.Sequential(nn.Linear(latent_variable_dim, output_dim))
+		self.encoder = nn.Sequential(nn.Linear(input_dim, latent_variable_dim), nn.Sigmoid())
+		self.decoder = nn.Sequential(nn.Linear(latent_variable_dim, output_dim), nn.Sigmoid())
 
 	def forward(self, x):
 		encoded = self.encoder(x)
