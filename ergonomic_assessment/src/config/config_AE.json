@@ -93,7 +93,7 @@
 		"type_AE": "AE_simple",
 		"input_type": "jointAngle",
 		"list_metric": ["jointAngle"],
-		"stop_criterion": 0.01
+		"stop_criterion": 0.001
 	},
 
 	"AE_hidden_2":{
@@ -105,7 +105,7 @@
 		"type_AE": "AE",
 		"input_type": "jointAngle",
 		"list_metric": ["jointAngle"],
-		"stop_criterion": 0.01
+		"stop_criterion": 0.001
 	},
 
 	"AE_hidden_3":{
@@ -117,7 +117,7 @@
 		"type_AE": "AE",
 		"input_type": "jointAngle",
 		"list_metric": ["jointAngle"],
-		"stop_criterion": 0.01
+		"stop_criterion": 0.001
 	},
 
 	"AE_hidden_5":{
@@ -129,7 +129,7 @@
 		"type_AE": "AE",
 		"input_type": "jointAngle",
 		"list_metric": ["jointAngle"],
-		"stop_criterion": 0.01
+		"stop_criterion": 0.001
 	},
 
 	"AE_hidden_7":{
@@ -141,7 +141,7 @@
 		"type_AE": "AE",
 		"input_type": "jointAngle",
 		"list_metric": ["jointAngle"],
-		"stop_criterion": 0.01
+		"stop_criterion": 0.001
 	},
 
 	"AE_hidden_10":{
@@ -153,7 +153,7 @@
 		"type_AE": "AE",
 		"input_type": "jointAngle",
 		"list_metric": ["jointAngle"],
-		"stop_criterion": 0.01
+		"stop_criterion": 0.001
 	},
 
 	"position_input":{
