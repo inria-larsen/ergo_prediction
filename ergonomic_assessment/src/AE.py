@@ -32,6 +32,15 @@ class AutoEncoderSimple(nn.Module):
 		decoded = self.decoder(encoded)
 		return encoded, decoded
 
+	def encode_data(self, x):
+		encoded = self.encoder(x)
+		return encoded
+
+	def decode_data(self, x):
+		decoded = self.decoder(x)
+		return decoded
+
+
 class AutoEncoder(nn.Module):
 	def __init__(self, input_dim, latent_variable_dim, hidden_dim, output_dim):
 		super(AutoEncoder, self).__init__()
@@ -53,6 +62,14 @@ class AutoEncoder(nn.Module):
 		encoded = self.encoder(x)
 		decoded = self.decoder(encoded)
 		return encoded, decoded
+
+	def encode_data(self, x):
+		encoded = self.encoder(x)
+		return encoded
+
+	def decode_data(self, x):
+		decoded = self.decoder(x)
+		return decoded
 
 class VariationalAutoencoder(nn.Module):
 	def __init__(self, input_dim, latent_variable_dim, hidden_dim, output_dim):
@@ -281,7 +298,7 @@ class ModelAutoencoder():
 			# b_y = self.test_loader.view(-1, self.input_dim)
 
 		else:
-			data_norm = tools.normalization(data, self.data_min, self.data_max)
+			data_norm = tools.normalization(data, self.loss_data_min, self.loss_data_max)
 			# data = np.asarray(data)
 			# data_norm = np.copy(data)
 			# data = data.astype(np.float32)
@@ -305,6 +322,18 @@ class ModelAutoencoder():
 		return decoded_joint, encoded.detach().numpy(), score
 
 
+	def encode_data(self, input_data):
+		data_norm = tools.normalization(input_data, self.loss_data_min, self.loss_data_max)
+		b_x = torch.from_numpy(data_norm)
+
+		encoded = self.encode_data(b_x)
+
+		encoded_data = encoded.detach().numpy()
+		encoded_data = tools.denormalization(encoded_data, self.loss_data_min, self.loss_data_max)
+
+		return encoded_data
+
+
 	def get_data_train(self):
 		return self.data_train
 
@@ -316,6 +345,14 @@ class ModelAutoencoder():
 
 	def get_config(self):
 		return self.config
+
+	def decode_data(self, data, type_data = 'jointAngle'):
+		data = data.astype(np.float32)
+		data = torch.from_numpy(data)
+		decoded_data = self.autoencoder.decode_data(data)
+		decoded_data = decoded_data.detach().numpy()
+		decoded_data = tools.denormalization(decoded_data, self.loss_data_min, self.loss_data_max)
+		return decoded_data
 
 	def prepare_data(self, metric, input_data):
 		if metric == 'posture':

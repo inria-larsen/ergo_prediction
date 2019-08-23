@@ -187,6 +187,7 @@ class Skeleton():
 		q = dict()
 
 		for j in self.urdf_model.joints:
+
 			if j.type != 'fixed':
 				q[j.name] = joint_mapping[j.name][1] * self.joint_angle[joint_mapping[j.name][0]]
 
@@ -242,7 +243,7 @@ class Skeleton():
 
 		return lines
 
-	def animate_skeleton(self, joint_seq_list, color=['b'], save=False, position_flag=False):
+	def animate_skeleton(self, joint_seq_list, color=['b', 'r'], save=False, position_flag=False):
 		"""
 		Take a sequence of joint angle data to animate the skeleton.
 		"""
@@ -250,18 +251,6 @@ class Skeleton():
 		ax = plt.gca()
 
 		position_data = [[]]
-
-		# for num_seq, sequence in enumerate(joint_seq_list):
-		# 	for i in range(len(sequence)):
-		# 		if position_flag == False: 
-		# 			position_data[num_seq].append(self.update_posture(sequence[i], flag_pos = True))
-		# 		else:
-		# 			position_data[num_seq].append(self.update_position_data(sequence[i]))
-
-		# 	if num_seq < len(joint_seq_list)-1:
-		# 		position_data.append([])
-
-		# if position_flag:
 
 		lines = []
 
@@ -283,7 +272,7 @@ class Skeleton():
 						[self.position[id_ini*3+1],self.position[id_end*3+1]])
 					lines[num_seq][num_seg].set_3d_properties([self.position[id_ini*3+2],self.position[id_end*3+2]])
 
-		anim=animation.FuncAnimation(fig,animate,repeat=False,blit=False,frames=len(joint_seq_list[0]), interval=10)
+		anim=animation.FuncAnimation(fig,animate,repeat=False,blit=False,frames=len(joint_seq_list[0]), interval=20)
 
 		if save:
 			anim.save('skeleton_reconstruct.mp4',writer=animation.FFMpegWriter(fps=24))

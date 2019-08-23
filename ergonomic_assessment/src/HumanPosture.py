@@ -39,6 +39,7 @@ class HumanPosture():
 				self.list_all_joints.append(joint + '_' + dim)
 				self.reduced_dof += 1
 		self.list_all_joints.sort()	
+		self.reduced_joints.sort()
 
 	def update_posture(self, input_joints, num_frame=0):
 		if(type(input_joints) == np.ndarray):
@@ -122,5 +123,98 @@ class HumanPosture():
 
 
 		return ax
+
+
+	def reduce2complete(self, data_reduce):
+		# Joint 1 => 4
+		id_joint = self.get_id_reduced_joint('jTorso')
+		self.joints_whole_body[0] = data_reduce[id_joint*3+1]/4
+		self.joints_whole_body[1] = data_reduce[id_joint*3+2]/4
+		self.joints_whole_body[2] = data_reduce[id_joint*3]/4
+
+		self.joints_whole_body[3] = data_reduce[id_joint*3+1]/4
+		self.joints_whole_body[4] = data_reduce[id_joint*3+2]/4
+		self.joints_whole_body[5] = data_reduce[id_joint*3]/4
+
+		self.joints_whole_body[6] = data_reduce[id_joint*3+1]/4
+		self.joints_whole_body[7] = data_reduce[id_joint*3+2]/4
+		self.joints_whole_body[8] = data_reduce[id_joint*3]/4
+
+		self.joints_whole_body[9] = data_reduce[id_joint*3+1]/4
+		self.joints_whole_body[10] = data_reduce[id_joint*3+2]/4
+		self.joints_whole_body[11] = data_reduce[id_joint*3]/4
+
+		self.joints_whole_body[12:15] = 0.0
+
+		id_joint = self.get_id_reduced_joint('jNeck')
+		self.joints_whole_body[15] = data_reduce[id_joint*3+1]
+		self.joints_whole_body[16] = data_reduce[id_joint*3+2]
+		self.joints_whole_body[17] = data_reduce[id_joint*3]
+
+		self.joints_whole_body[18:21] = 0.0
+
+		id_joint = self.get_id_reduced_joint('jRShoulder')
+		self.joints_whole_body[21] = data_reduce[id_joint*3+1]
+		self.joints_whole_body[22] = data_reduce[id_joint*3+2]
+		self.joints_whole_body[23] = data_reduce[id_joint*3]
+
+		id_joint = self.get_id_reduced_joint('jRElbow')
+		self.joints_whole_body[24] = data_reduce[id_joint*3+1]
+		self.joints_whole_body[25] = data_reduce[id_joint*3+2]
+		self.joints_whole_body[26] = data_reduce[id_joint*3]
+
+		id_joint = self.get_id_reduced_joint('jRWrist')
+		self.joints_whole_body[27] = data_reduce[id_joint*3+1]
+		self.joints_whole_body[28] = data_reduce[id_joint*3+2]
+		self.joints_whole_body[29] = data_reduce[id_joint*3]
+
+		self.joints_whole_body[30:33] = 0.0
+
+		id_joint = self.get_id_reduced_joint('jLShoulder')
+		self.joints_whole_body[33] = data_reduce[id_joint*3+1]
+		self.joints_whole_body[34] = data_reduce[id_joint*3+2]
+		self.joints_whole_body[35] = data_reduce[id_joint*3]
+
+		id_joint = self.get_id_reduced_joint('jLElbow')
+		self.joints_whole_body[36] = data_reduce[id_joint*3+1]
+		self.joints_whole_body[37] = data_reduce[id_joint*3+2]
+		self.joints_whole_body[38] = data_reduce[id_joint*3]
+
+		id_joint = self.get_id_reduced_joint('jLWrist')
+		self.joints_whole_body[39] = data_reduce[id_joint*3+1]
+		self.joints_whole_body[40] = data_reduce[id_joint*3+2]
+		self.joints_whole_body[41] = data_reduce[id_joint*3]
+
+		id_joint = self.get_id_reduced_joint('jRHip')
+		self.joints_whole_body[42] = data_reduce[id_joint*3+1]
+		self.joints_whole_body[43] = data_reduce[id_joint*3+2]
+		self.joints_whole_body[44] = data_reduce[id_joint*3]
+
+		id_joint = self.get_id_reduced_joint('jRKnee')
+		self.joints_whole_body[45] = data_reduce[id_joint*3+1]
+		self.joints_whole_body[46] = data_reduce[id_joint*3+2]
+		self.joints_whole_body[47] = data_reduce[id_joint*3]
+
+		self.joints_whole_body[48:51] = 0.0
+
+		self.joints_whole_body[51:54] = 0.0
+
+		id_joint = self.get_id_reduced_joint('jLHip')
+		self.joints_whole_body[54] = data_reduce[id_joint*3+1]
+		self.joints_whole_body[55] = data_reduce[id_joint*3+2]
+		self.joints_whole_body[56] = data_reduce[id_joint*3]
+
+		id_joint = self.get_id_reduced_joint('jLKnee')
+		self.joints_whole_body[57] = data_reduce[id_joint*3+1]
+		self.joints_whole_body[58] = data_reduce[id_joint*3+2]
+		self.joints_whole_body[59] = data_reduce[id_joint*3]
+
+		self.joints_whole_body[60:63] = 0.0
+
+		self.joints_whole_body[63:66] = 0.0
+
+
+
+		return self.joints_whole_body
 
 		

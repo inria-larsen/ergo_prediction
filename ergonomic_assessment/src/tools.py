@@ -293,9 +293,13 @@ def plot_loss_function(metric):
 def compute_sequence_ergo(data, num_frame, list_score):
 	score_total = []
 	human_posture = HumanPosture('config/mapping_joints.json')
-	ergo_assessment = ErgoAssessment('config/rula_config.json')
+	ergo_assessment = ErgoAssessment('config/reba_config.json')
 
-	human_posture.update_posture(data)
+	if len(data) == human_posture.get_dim_reduce():
+		human_posture.set_posture(data)
+	elif len(data) == human_posture.get_dim_input():
+		human_posture.update_posture(data)
+
 	ergo_assessment.compute_ergo_scores(human_posture)
 	for score in list_score:
 		score_total.append(ergo_assessment[score])
@@ -304,7 +308,7 @@ def compute_sequence_ergo(data, num_frame, list_score):
 def reduce_skeleton(data, num_frame, list_score):
 	score_total = []
 	human_posture = HumanPosture('config/mapping_joints.json')
-	ergo_assessment = ErgoAssessment('config/rula_config.json')
+	ergo_assessment = ErgoAssessment('config/reba_config.json')
 
 	human_posture.update_posture(data)
 	for score in list_score:
@@ -342,10 +346,15 @@ def normalization(data, min_data, max_data):
 	data_norm = np.copy(data)
 	data_norm = data_norm.astype(np.float32)
 
-	size_data, input_dim = np.shape(data_norm)
+	if data_norm.ndim == 1:
+		data_norm = (data - min_data)/(max_data - min_data)
 
-	for i in range(input_dim):
-		data_norm[:,i] = (data[:,i] - min_data[i])/(max_data[i] - min_data[i])
+	else:
+		size_data, input_dim = np.shape(data_norm)
+
+		for i in range(input_dim):
+			data_norm[:,i] = (data[:,i] - min_data[i][0])/(max_data[i][0] - min_data[i][0])
+			
 	data_norm = data_norm.astype(np.float32)
 	return data_norm
 

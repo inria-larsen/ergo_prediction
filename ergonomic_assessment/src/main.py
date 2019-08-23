@@ -30,45 +30,34 @@ if __name__ == '__main__':
 
 	nbr_iterations = 10
 
-	for k in range(nbr_iterations):
-		autoencoder = AE.ModelAutoencoder(parser, local_path)
-		list_metric = autoencoder.get_list_metric()
-		metric = list_metric[0]
+	list_size = [2, 3, 5, 7, 10, 15]
 
-		size_latent = autoencoder.get_config()['latent_dim']
-		type_AE = autoencoder.get_config()['type_AE']
+	for size_latent in list_size:
 
-		path = local_path + "/save/" + type_AE + "/" + metric + '/' + str(size_latent) + '/'
-		if not(os.path.isdir(path)):
-			os.mkdir(path)
-		if not(os.path.isdir(path + 'loss/')):
-			os.mkdir(path + 'loss/')
-		if os.path.exists(path + "autoencoder_" + str(size_latent) + '_' + str(k) + ".pkl"):
-			continue
+		for k in range(nbr_iterations):
+			autoencoder = AE.ModelAutoencoder(parser, local_path)
+			list_metric = autoencoder.get_list_metric()
+			metric = list_metric[0]
 
-		loss = autoencoder.train_model(list_metric=list_metric)
-		all_data_test = autoencoder.get_data_test()
+			# size_latent = autoencoder.get_config()['latent_dim']
+			type_AE = autoencoder.get_config()['type_AE']
 
-		# score_metric = autoencoder.test_model(list_metric=list_metric)
-			
-		pickle.dump(autoencoder, open(path + "autoencoder_" + str(size_latent) + '_' + str(k) + ".pkl", "wb" ))
-		pickle.dump(loss, open(path + 'loss/' + "loss_" + str(size_latent) + '_' + str(k) + ".pkl", "wb" ))
+			path = local_path + "/save/" + type_AE + "/" + metric + '/' + str(size_latent) + '/'
 
-		del autoencoder
+			if not(os.path.isdir(path)):
+				os.mkdir(path)
+			if not(os.path.isdir(path + 'loss/')):
+				os.mkdir(path + 'loss/')
+			if os.path.exists(path + "autoencoder_" + str(size_latent) + '_' + str(k) + ".pkl"):
+				continue
 
+			loss = autoencoder.train_model(list_metric=list_metric)
+			all_data_test = autoencoder.get_data_test()
 
+		
+			pickle.dump(autoencoder, open(path + "autoencoder_" + str(size_latent) + '_' + str(k) + ".pkl", "wb" ))
+			pickle.dump(loss, open(path + 'loss/' + "loss_" + str(size_latent) + '_' + str(k) + ".pkl", "wb" ))
 
+			del autoencoder
 
-
-
-
-
-	# for metric in list_metric:
-
-	# 	fig1 = plt.figure()
-	# 	lines = []
-	# 	for i, size in enumerate(size_list):
-	# 		line, = plt.plot(loss[i][metric], label = str(size))
-	# 	plt.legend()
-
-	# plt.show()
+	plt.show()

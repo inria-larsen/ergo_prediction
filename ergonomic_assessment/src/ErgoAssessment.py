@@ -5,6 +5,7 @@ email: adrien.malaise@inria.fr
 
 import json
 import math 
+import numpy as np
 
 from HumanPosture import HumanPosture
 
@@ -101,6 +102,11 @@ class ErgoAssessment:
 		related_joint = local_score['info']['related_joint']
 		for joint, num_joint in zip(related_joint, range(len(related_joint))):
 			joint_angle = self.posture.get_joint_angle(joint)
+			if joint_angle <= -np.pi/2:
+				print(joint, joint_angle)
+				joint_angle = -np.pi/2 + 0.1
+			elif joint_angle >= np.pi/2:
+				joint_angle = np.pi/2 - 0.1
 			for threshold, i in zip(local_score['info']['threshold'][num_joint], 
 				range(len(local_score['info']['threshold'][num_joint]))):
 				if threshold[0] < joint_angle <= threshold[1]:
