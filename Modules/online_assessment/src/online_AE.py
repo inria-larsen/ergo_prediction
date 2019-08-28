@@ -63,34 +63,44 @@ class OnlineAE(yarp.RFModule):
 
 		del input_value[0]
 
+		input_value = np.deg2rad(input_value)
+
 		data_output, encoded_data, score = self._autoencoder.test_model(input_value)
 
 		b_out = self.out_port_reconstruct.prepare()
 		b_out.clear()
+		b_out.addInt(len(data_output))
 		for data in data_output[0]:
-			b_out.addDouble(data.astype(np.float64))
+			b_out.addDouble(np.rad2deg(data.astype(np.float64)))
 		self.out_port_reconstruct.write()
 
 		b_out = self.out_port_latent.prepare()
 		b_out.clear()
 
+		b_out.addInt(len(encoded_data))
 		for data in encoded_data[0]:
 			b_out.addDouble(data.astype(np.float64))
 		self.out_port_latent.write()
 
 		return True
+
+	def getPeriod(self):
+		return 0.001
 		
 if __name__=="__main__":
 	yarp.Network.init()
 
 	rf = yarp.ResourceFinder()
 	rf.setVerbose(True)
-	rf.setDefaultContext("ergo_pred")
+	rf.setDefaultContext("online_recognition")
 	rf.setDefaultConfigFile("default.ini")
 	rf.configure(sys.argv)
 
+
+
 	mod_AE = OnlineAE()
 	mod_AE.configure(rf)
+
 
 	mod_AE.runModule(rf)
 
