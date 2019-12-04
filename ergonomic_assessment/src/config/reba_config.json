@@ -37,7 +37,7 @@
 			"related_score": "none",
 			"related_joint": ["jRKnee_pitch"],
 			"threshold_units": "degrees",
-			"threshold":[[[-10,30], [30, 60], [60, 180]]],
+			"threshold":[[[-90,30], [30, 60], [60, 180]]],
 			"related_value": [[1, 2, 3]]
 		},
 
@@ -46,7 +46,7 @@
 			"related_score": "none",
 			"related_joint": ["jLKnee_pitch"],
 			"threshold_units": "degrees",
-			"threshold":[[[-10,30], [30, 60], [60, 180]]],
+			"threshold":[[[-90,30], [30, 60], [60, 180]]],
 			"related_value": [[1, 2, 3]]
 		},
 
@@ -81,7 +81,7 @@
 			"related_score": "none",
 			"related_joint": ["jRElbow_pitch"],
 			"threshold_units": "degrees",
-			"threshold":[[[60,100], [100, 180], [-10, 60]]],
+			"threshold":[[[60,100], [100, 180], [-90, 60]]],
 			"related_value": [[1, 2, 2]]
 		},
 
@@ -90,7 +90,7 @@
 			"related_score": "none",
 			"related_joint": ["jLElbow_pitch"],
 			"threshold_units": "degrees",
-			"threshold":[[[60,100], [100, 180], [-10, 60]]],
+			"threshold":[[[60,100], [100, 180], [-90, 60]]],
 			"related_value": [[1, 2, 2]]
 		},
 
@@ -195,7 +195,7 @@
 			]
 		},
 	
-		"TABLE_RULA_C": {
+		"TABLE_REBA_C": {
 			"type_score": "table",
 			"related_score":[
 				"TABLE_RULA_B",

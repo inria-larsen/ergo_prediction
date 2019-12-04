@@ -9,11 +9,12 @@ from mpl_toolkits.mplot3d import Axes3D
 # import cv2
 from copy import deepcopy
 import pandas as pd
+import scipy.stats as st
+from scipy.stats import kde
 
 
 def draw_distribution(score, list_states, real_labels):
 	
-
 	clrs = np.zeros((len(list_states), 3))
 	# sns.set(font_scale=1.5)
 	id_pred = np.argmax(score)
@@ -94,7 +95,11 @@ def video_distribution(score_samples, list_states, real_labels, fps, path, name_
 	return
 
 def draw_pos(ax, pos_data):
-	Xsens_bodies = [ 	'Pelvis', 'L5', 'L3', 'T12', 'T8', 'Neck', 'Head',  
+	ax.set_xlim(-2,2)
+	ax.set_ylim(-2,2)
+	ax.set_zlim(-1,1)
+	
+	Xsens_bodies = ['Pelvis', 'L5', 'L3', 'T12', 'T8', 'Neck', 'Head',  
 			'Right Shoulder', 'Right Upper Arm', 'Right Forearm', 'Right Hand',  
 			'Left Shoulder', 'Left Upper Arm', 'Left Forearm', 'Left Hand',   	
 			'Right Upper Leg', 'Right Lower Leg', 'Right Foot', 'Right Toe',
@@ -106,12 +111,12 @@ def draw_pos(ax, pos_data):
 		['Pelvis', 'Right Upper Leg'], ['Right Upper Leg', 'Right Lower Leg'], ['Right Lower Leg', 'Right Foot'], ['Right Foot', 'Right Toe'],
 		['Pelvis', 'Left Upper Leg'], ['Left Upper Leg', 'Left Lower Leg'], ['Left Lower Leg', 'Left Foot'], ['Left Foot', 'Left Toe']]
 
-	# Xsens_segments = [['Pelvis', 'T8'], #['L5', 'L3'], ['L3', 'T12'], ['T12', 'T8'], ['T8','Neck']
+	# Xsens_segments = [['L5', 'L3'], ['L3', 'T12'], ['T12', 'T8'], ['T8','Neck'],
 	# 	['Neck', 'Head'], 
 	# 	['T8', 'Right Shoulder'], ['Right Shoulder', 'Right Upper Arm'], ['Right Upper Arm', 'Right Forearm'], ['Right Forearm', 'Right Hand'],
 	# 	['T8', 'Left Shoulder'],  ['Left Shoulder', 'Left Upper Arm'], ['Left Upper Arm', 'Left Forearm'], ['Left Forearm', 'Left Hand'],
-	# 	['Pelvis', 'Right Upper Leg'], ['Right Upper Leg', 'Right Lower Leg'], ['Right Lower Leg', 'Right Foot'], ['Right Foot', 'Right Toe'],
-	# 	['Pelvis', 'Left Upper Leg'], ['Left Upper Leg', 'Left Lower Leg'], ['Left Lower Leg', 'Left Foot'], ['Left Foot', 'Left Toe']]
+	# 	['L5', 'Right Upper Leg'], ['Right Upper Leg', 'Right Lower Leg'], ['Right Lower Leg', 'Right Foot'], ['Right Foot', 'Right Toe'],
+	# 	['L5', 'Left Upper Leg'], ['Left Upper Leg', 'Left Lower Leg'], ['Left Lower Leg', 'Left Foot'], ['Left Foot', 'Left Toe']]
 
 
 	for seg in Xsens_segments:
@@ -126,6 +131,7 @@ def draw_pos(ax, pos_data):
 		z_fin = (pos_data[3*index_fin+2])
 
 		ax.plot([x_ini, x_fin],	[y_ini, y_fin], [z_ini, z_fin], 'm')
+
 
 	return ax
 
@@ -199,6 +205,51 @@ def plot_hist_score(list_states, labels, data):
 	df_group = df_data.groupby(['states'])
 	ax = df_data.boxplot(grid=False, column='score', by='states')
 
+def plot_ergo_latentspace(data, labels, color_label, color):
+	fig = plt.figure()
+	ax1 = fig.add_subplot(111)
+
+	df_data = pd.DataFrame({'data_1': data[0], 'data_2': data[1], 'labels': labels})
+	df_group = df_data.groupby(['labels'])
+
+	ax1.set_ylim(-1, 1)
+	ax1.set_xlim(-1, 1)
+
+	# for data_state in df_group:
+	# # 	sns.jointplot(x=data_state[1]["data_1"], y=data_state[1]["data_2"], kind='kde', color="skyblue")
+	# 	nbins = 20
+	# 	values = np.vstack([data_state[1]["data_1"], data_state[1]["data_2"]])
+	# 	k = kde.gaussian_kde(values)
+	# 	xi, yi = np.mgrid[min(data_state[1]["data_1"]):max(data_state[1]["data_1"]):nbins*1j, min(data_state[1]["data_2"]):max(data_state[1]["data_2"]):nbins*1j]
+	# 	zi = k(np.vstack([xi.flatten(), yi.flatten()]))
+
+	# 	if data_state[1].iloc[0]['labels'] < 4:
+	# 		color_map = plt.cm.Greens
+	# 	elif data_state[1].iloc[0]['labels'] < 6:
+	# 		color_map = plt.cm.Oranges
+	# 	else:
+	# 		color_map = plt.cm.Reds
+	# 	# if data_state[1]['labels'] 
+
+	# 	ax1.pcolormesh(xi, yi, zi.reshape(xi.shape), cmap=color_map)
+		# ax1.contour(xi, yi, zi.reshape(xi.shape) )
+
+	plt.title('Ergonomic score in latent space')
+	plt.savefig('map_postures.pdf')
+
+	plt.figure()
+	plt.scatter(data[0], data[1], c=color_label)
+	legend = []
+	for i in range(7):
+		legend.append(mpatches.Patch(color=color[i], label=str(i+1)))
+
+	plt.legend(handles=legend)
+
+	plt.title('Ergonomic score in latent space')
+	plt.savefig('map_postures.pdf')
+
+
+
 def plot_state_latentspace(data, labels):
 	fig = plt.figure(figsize=(8,8))
 	ax = fig.gca()
@@ -214,37 +265,43 @@ def plot_state_latentspace(data, labels):
 		if len(x) < 2:
 			continue
 
+		mean = np.array([0, 0])
+		sigma_1 = 2
+		sigma_2 = 1
+		alpha = np.pi / 4
+
+
 	# Define the borders
 	# deltaX = (max(data[0]) - min(data[0]))/10
 	# deltaY = (max(data[1]) - min(data[1]))/10
 
-		deltaX = 0.01
-		deltaY = 0.01
+		# deltaX = 0.01
+		# deltaY = 0.01
 
-		xmin = min(x) - deltaX
-		xmax = max(x) + deltaX
+		# xmin = min(x) - deltaX
+		# xmax = max(x) + deltaX
 
-		ymin = min(y) - deltaY
-		ymax = max(y) + deltaY
+		# ymin = min(y) - deltaY
+		# ymax = max(y) + deltaY
 
-		xx, yy = np.mgrid[xmin:xmax:100j, ymin:ymax:100j]
+		# xx, yy = np.mgrid[xmin:xmax:100j, ymin:ymax:100j]
 
-		positions = np.vstack([xx.ravel(), yy.ravel()])
-		values = np.vstack([x, y])
-		kernel = st.gaussian_kde(values)
-		f = np.reshape(kernel(positions).T, xx.shape)
+		# positions = np.vstack([xx.ravel(), yy.ravel()])
+		# values = np.vstack([x, y])
+		# kernel = st.gaussian_kde(values)
+		# f = np.reshape(kernel(positions).T, xx.shape)
 
 		
 
-		ax.set_xlim(xmin, xmax)
-		ax.set_ylim(ymin, ymax)
-		cfset = ax.contourf(xx, yy, f, cmap='coolwarm')
-		ax.imshow(np.rot90(f), cmap='coolwarm', extent=[xmin, xmax, ymin, ymax])
-		cset = ax.contour(xx, yy, f, colors='k')
-		ax.clabel(cset, inline=1, fontsize=10)
-		ax.set_xlabel('X')
-		ax.set_ylabel('Y')
-		plt.title('2D Gaussian Kernel density estimation')
+		# ax.set_xlim(xmin, xmax)
+		# ax.set_ylim(ymin, ymax)
+		# cfset = ax.contourf(xx, yy, f, cmap='coolwarm')
+		# ax.imshow(np.rot90(f), cmap='coolwarm', extent=[xmin, xmax, ymin, ymax])
+		# cset = ax.contour(xx, yy, f, colors='k')
+		# ax.clabel(cset, inline=1, fontsize=10)
+		# ax.set_xlabel('X')
+		# ax.set_ylabel('Y')
+		# plt.title('2D Gaussian Kernel density estimation')
 
 
 

@@ -149,14 +149,16 @@ class Skeleton():
 					qi = q[joint.name]
 					if joint.axis == [1., 0., 0.]:
 						Hi = np.matrix([[1., 0., 0., 0.], [0., np.cos(qi), -np.sin(qi), 0.], [0., np.sin(qi), np.cos(qi), 0.], [0, 0, 0, 1]])
-					elif joint.axis == [0., 1., 0.]: 
+					elif joint.axis == [0., 1., 0.]:
 						Hi = np.matrix([[np.cos(qi), 0., np.sin(qi), 0.], [0., 1., 0., 0.], [-np.sin(qi), 0., np.cos(qi), 0.], [0, 0, 0, 1]])
 					elif joint.axis == [0., 0., 1.]:
 						Hi = np.matrix([[np.cos(qi), -np.sin(qi), 0., 0.], [np.sin(qi), np.cos(qi), 0., 0.], [0., 0., 1., 0.], [0, 0, 0, 1]])
 					else:
 						raise ValueError('Joint axis other than X, Y or Z not handled for now')
+
 				else:
 					Hi = np.matrix(np.identity(4))
+
 				H = Hjoint * Hi * H
 				linkname = joint.parent
 			except:
@@ -180,7 +182,6 @@ class Skeleton():
 		"""
 		Convert the joint angle data to cartesian position
 		"""
-
 		position_root = [0,0,0]
 		quaternion_root = [1, 0, 0, 0]
 
@@ -206,42 +207,65 @@ class Skeleton():
 			id_end = Xsens_bodies.index(seg[1])
 			self.position[id_end*3:id_end*3+3] = self.get_segment_position(seg[1], q)
 
-
-	def visualise_from_joints(self, data = [], color='b', position_data = False):
+	def visualise_from_joints(self, ax, joint_data_list, color_list=['b'], position_data = False, lines = []):
 		"""
 		Plot the skeleton based on joint angle data
 		"""
-		if len(data) > 0:
-			if position_data:
-				self.position = data
-			else:
-				self.update_posture(data, flag_pos = True)
+		# if len(data) > 0:
+		# 	if position_data:
+		# 		self.position = data
+		# 	else:
+		# 		self.update_posture(data, flag_pos = True)
 
-		ax = plt.gca()
+		# ax = plt.gca()
 
-		ax.set_title('Skeleton reconstruction')
+		# ax.set_title('Skeleton reconstruction')
 
-		lines = []
-
-		ax.set_xlim(-2,2)
-		ax.set_ylim(-2,2)
+		ax.set_xlim(-1.5,1.5)
+		ax.set_ylim(-1.5,1.5)
 		ax.set_zlim(-1,1)
 
-		for num_seg, seg in enumerate(Xsens_segments):
-			id_ini = Xsens_bodies.index(seg[0])
-			x_ini = self.position[id_ini*3]
-			y_ini = self.position[id_ini*3+1]
-			z_ini = self.position[id_ini*3+2]
+		ax.view_init(10, -70)
 
-			id_end = Xsens_bodies.index(seg[1])
-			x_end = self.position[id_end*3]
-			y_end = self.position[id_end*3+1]
-			z_end = self.position[id_end*3+2]
+		# if len(lines) == 0:
+		# 	flag_line = 0
+		# else:
+		# 	flag_line = 1
 
-			line, = ax.plot([x_ini, x_end],	[y_ini, y_end], [z_ini, z_end], 'm', color=color)
-			lines.append(line)
+		for data, color  in zip(joint_data_list, color_list):
+			self.update_posture(data, flag_pos = True)
+
+			for num_seg, seg in enumerate(Xsens_segments):
+				id_ini = Xsens_bodies.index(seg[0])
+				id_end = Xsens_bodies.index(seg[1])
+
+				# if flag_line == 0:
+				x_ini = self.position[id_ini*3]
+				y_ini = self.position[id_ini*3+1]
+				z_ini = self.position[id_ini*3+2]
+
+				x_end = self.position[id_end*3]
+				y_end = self.position[id_end*3+1]
+				z_end = self.position[id_end*3+2]
+
+				line, = ax.plot([x_ini, x_end],	[y_ini, y_end], [z_ini, z_end], 'm', color=color)
+				lines.append(line)
+
+
+		red_patch = mpatches.Patch(color='r', label='Skeleton reconstruction')
+		blue_patch = mpatches.Patch(color='b', label='Xsens Data')
+		ax.legend(handles=[blue_patch, red_patch])
+
+			# else:
+			# 	lines[num_seg].set_data([self.position[id_ini*3],self.position[id_end*3]], 
+			# 			[self.position[id_ini*3+1],self.position[id_end*3+1]])
+			# 	lines[num_seg].set_3d_properties([self.position[id_ini*3+2],self.position[id_end*3+2]])
+
 
 		return lines
+
+	# def update_plot_skeleton(self, joint_data_list, color_list=['b']):
+
 
 	def animate_skeleton(self, joint_seq_list, color=['b', 'r'], save=False, position_flag=False):
 		"""
@@ -255,7 +279,7 @@ class Skeleton():
 		lines = []
 
 		for num_seq, sequence in enumerate(joint_seq_list):
-			lines.append(self.visualise_from_joints(sequence[0], color=color[num_seq], position_data = position_flag))
+			lines.append(self.visualise_from_joints(ax, [sequence[0]], color_list=[color[num_seq]], position_data = position_flag))
 
 		def animate(i):
 			for num_seq, sequence in enumerate(joint_seq_list):

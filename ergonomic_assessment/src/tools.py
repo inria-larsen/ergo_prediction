@@ -59,7 +59,7 @@ def sync_labels(timestamps, labels):
 
 	return labels_sync
 
-def load_data(path, tracks, name_feature):
+def load_data(path, tracks, name_feature = 'jointAngle_'):
 	print('Loading data...')
 
 	all_tracks = ['current_action']
@@ -142,7 +142,8 @@ def load_data(path, tracks, name_feature):
 		# 			data_win2[num_data][t, i*3:i*3+3] = R@data[t,i*3:i*3+3]
 
 		timestamps.append(data[:,0])
-		real_labels[0][num_data] = sync_labels(timestamps[num_data], real_labels[0][num_data])
+		# real_labels[0][num_data] = sync_labels(timestamps[num_data], real_labels[0][num_data])
+
 
 	list_features = list_reduce_features
 
@@ -290,10 +291,9 @@ def animate_skeleton():
 def plot_loss_function(metric):
 	return
 
-def compute_sequence_ergo(data, num_frame, list_score):
+def compute_sequence_ergo(ergo_assessment, data, num_frame, list_score, config_path):
 	score_total = []
-	human_posture = HumanPosture('config/mapping_joints.json')
-	ergo_assessment = ErgoAssessment('config/reba_config.json')
+	human_posture = HumanPosture(config_path + 'config/mapping_joints.json')
 
 	if len(data) == human_posture.get_dim_reduce():
 		human_posture.set_posture(data)
@@ -354,7 +354,7 @@ def normalization(data, min_data, max_data):
 
 		for i in range(input_dim):
 			data_norm[:,i] = (data[:,i] - min_data[i][0])/(max_data[i][0] - min_data[i][0])
-			
+
 	data_norm = data_norm.astype(np.float32)
 	return data_norm
 

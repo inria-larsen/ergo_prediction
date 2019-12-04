@@ -27,13 +27,21 @@ class RealTimePlotModule():
 	Input port: /processing/NamePort:o
 	"""
 	def __init__(self):
-		pg.mkQApp()
+		self.app = pg.mkQApp()
+		pg.setConfigOption('background', 'w')
+		pg.setConfigOption('foreground', 'k')
+
+		self.view = pg.PlotWidget()
+		self.view.resize(800, 600)
+		self.view.setWindowTitle('Ergonomic score in latent space')
+		self.view.setAspectLocked(True)
+		self.view.show()
 
 		self.port = yarp.BufferedPortBottle()
 		self.port.open('/plot_latentspace')
 
 		metric = 'jointAngle'
-		ergo_name = ['RULA_SCORE']
+		ergo_name = ['TABLE_REBA_C']
 
 		size_latent = 2
 		dx = 0.1
@@ -69,7 +77,7 @@ class RealTimePlotModule():
 		reduce_posture = HumanPosture(path_src + 'config/mapping_joints.json')
 		posture = Skeleton('dhm66_ISB_Xsens.urdf')
 
-		self.X = np.arange(0.0, 1.0 + dx, dx)
+		self.X = np.arange(0.0, 1.0+dx, dx)
 
 		self.ergo_grid = np.zeros((len(self.X), len(self.X)))
 
@@ -87,113 +95,63 @@ class RealTimePlotModule():
 				else:
 					posture.update_posture(decoded_data[0])
 
-				self.ergo_grid[j,i] = tools.compute_sequence_ergo(decoded_data[0], 0, ergo_name, path_src)[0]
+				ergo_score = tools.compute_sequence_ergo(decoded_data[0], 0, ergo_name, path_src)[0]
+				if ergo_score == 1:
+					ergo_score = 1
+				elif 1 < ergo_score < 5:
+					ergo_score = 2
+				elif 4 < ergo_score < 6:
+					ergo_score = 3
+				else:
+					ergo_score = 4
 
+				self.ergo_grid[j,i] = ergo_score
 
-		# plt.ion()
-		# self.fig = plt.figure()
-		# self.ax = self.fig.add_subplot(111)
-		self.imv = pg.ImageView()
-		self.imv.show()
+		self.flag = 0
 
 		self.plot_latent_space()
 
 
 	def plot_latent_space(self, x=0, y=0):
+		if self.flag:
+			self.view.removeItem(self.scatter)
+		else:
+			self.flag = 1
+
+		self.scatter = pg.ScatterPlotItem(pen=pg.mkPen(width=10, color='r'), symbol='o', size=1)
+		plot_traj = pg.PlotItem(pen=pg.mkPen(width=5, color='r'), size=1)
+
+		img_np = np.rot90(np.rot90(np.rot90(self.ergo_grid)))
 		
+		img = pg.ImageItem(img_np)
+
+		self.scatter.setData(x=[x], y=[y])
+		plot_traj.setData(x, y)
+
+		img.setZValue(-100)
+		self.view.addItem(img)
+		self.view.addItem(self.scatter)
 		
-		self.imv.setImage(self.ergo_grid)
+	
+	def update(self):
+		b_in = self.port.read()
+		data = b_in.toString().split(' ')
 
-		pg.plot(x, y, pen=None, symbol='o') 
+		del data[0]
 
-		
-		# self.ax.cla()
-		# plt.sca(self.ax)
+		data = list(map(float, data))
+		data = np.asarray(data)
 
-		# cax = self.ax.matshow(self.ergo_grid, cmap=plt.cm.Reds)
-		# self.fig.colorbar(cax, ax = self.ax)
-
-		# labels = X[0::2].tolist()
-		# labels = ['{:.2f}'.format(name) for name in labels]
-
-		# self.ax.set_xticklabels(['']+labels)
-		# self.ax.set_yticklabels(['']+labels)
-
-		# self.ax.set_title('Ergonomic score in latent space')
-
-		
-
-
-	def update_plot(self):
-		# b_in = self.port.read()
-		# data = b_in.toString().split(' ')
-
-		self.plot_latent_space()
-
-		
-		# print(data)
-
-
-
-		
-
-		# del data[0]
-
-		# data = list(map(float, data))
-		# data = np.asarray(data)
-
-		# self.ax.scatter(data[0]*len(self.X), data[1]*len(self.X))
-
-		# pg.plot(data[0]*len(self.X), data[1]*len(self.X), pen=None, symbol='o') 
-
-		# self.fig.canvas.draw()
-
+		self.plot_latent_space(x=data[0]*len(self.X), y=len(self.X)-data[1]*len(self.X))
 
 		QtGui.QApplication.processEvents()
 
-		# b_in = self.port.read()
-		# data = b_in.toString().split(' ')
-
-		# if len(data) == 67:
-		# 	del data[0]
-
-		# data = list(map(float, data))
-		# data = np.asarray(data)
-
-		# self.ax.cla()
-		# plt.sca(self.ax)
-		# data = np.deg2rad(data)
-		# self.skeleton.visualise_from_joints(data)
-
-		# self.fig.canvas.draw()
-
-		
-        # plt.pause(0.001)
-
-		# if(self.flag_init == 0):
-		# 	for dim in range(dimension):
-		# 		self.list_curve.append(self.plotData.plot(pen=(dim,dimension)))
-		# 	self.flag_init = 1
-
-		# value = list(map(float, data))
-
-		# for dim in range(dimension):
-		# 	if(len(self.buffer) <= dim):
-		# 		self.buffer.append([])
-
-		# 	self.buffer[dim].append(value[dim])
-		# 	if(len(self.buffer[dim]) > self.size_window):
-		# 		del self.buffer[dim][0]
-
-		# for dim in range(dimension):
-		# 	self.list_curve[dim].setData(self.buffer[dim])
-
-		# QtGui.QApplication.processEvents()
 		return
 
 	def close(self):
 		yarp.Network.disconnect(self.input_port, self.port.getName())
 		self.port.close()
+		sys.exit(self.app.exec_())
 
 
 if __name__=="__main__":
@@ -205,7 +163,7 @@ if __name__=="__main__":
 
 	while(True):
 		try:
-			fig.update_plot()
+			fig.update()
 			i = 0
 		except KeyboardInterrupt:
 			fig.close()

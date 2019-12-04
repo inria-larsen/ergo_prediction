@@ -110,6 +110,7 @@
 				"yaw": 0
 			}
 		},
+		
 		"jLWrist": {
 			"input_joints": ["jLeftWrist"],
 			"mapping":{

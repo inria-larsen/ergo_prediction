@@ -168,12 +168,17 @@ class ModelAutoencoder():
 
 	def load_data(self, path):
 		self.list_features, self.data_np, self.real_labels, self.timestamps, list_states = tools.load_data(path, self.tracks, self.input_type + '_')
-		self.list_states = list_states[0]
+		self.list_states = list_states
+
+		
 
 		self.seq_data_train, seq_labels_train, self.seq_data_test, seq_labels_test, val_set, label_val, seq_id_train, seq_id_test, val_id = tools.split_data_base(self.data_np, self.real_labels[0], self.ratio_split)
 
 		self.data_train = []
 		self.data_test = []
+
+		self.labels_train = []
+		self.labels_test = []
 
 		for data_joint in self.seq_data_train:
 			for d_joint in data_joint:
@@ -345,6 +350,15 @@ class ModelAutoencoder():
 
 	def get_config(self):
 		return self.config
+
+	def get_all_data(self):
+		return self.data_np
+
+	def get_all_labels(self):
+		return self.real_labels
+
+	def get_list_states(self):
+		return self.list_states
 
 	def decode_data(self, data, type_data = 'jointAngle'):
 		data = data.astype(np.float32)
